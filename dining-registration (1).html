@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dining Registration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --navy: #002855;
+            --gold: #B8860B;
+            --light-gold: #D4AF37;
+            --white: #FFFFFF;
+            --light-gray: #F5F5F5;
+            --medium-gray: #E0E0E0;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --error: #C41E3A;
+            --success: #2E7D32;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--navy) 0%, #003d7a 100%);
+            color: var(--white);
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .logo-placeholder {
+            width: 150px;
+            height: 80px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px dashed var(--gold);
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold);
+            font-size: 0.875rem;
+            border-radius: 4px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .event-info {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--gold);
+        }
+
+        .event-info h2 {
+            color: var(--navy);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+
+        .event-detail {
+            margin-bottom: 0.75rem;
+        }
+
+        .event-detail strong {
+            color: var(--navy);
+            display: inline-block;
+            min-width: 120px;
+        }
+
+        .menu-section {
+            background: var(--light-gray);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            border: 1px solid var(--medium-gray);
+        }
+
+        .menu-section h3 {
+            color: var(--navy);
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+        }
+
+        .menu-section p {
+            white-space: pre-line;
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+
+        .cost-notice {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            border-left: 3px solid var(--gold);
+            font-weight: 500;
+        }
+
+        .submitted-diners {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+
+        .submitted-diners h2 {
+            color: var(--navy);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .submitted-diners h2::before {
+            content: "✓";
+            background: var(--success);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+        }
+
+        .diner-list {
+            list-style: none;
+        }
+
+        .diner-item {
+            background: var(--light-gray);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 4px;
+            border-left: 3px solid var(--gold);
+        }
+
+        .diner-name {
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 0.5rem;
+        }
+
+        .diner-details {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .form-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .form-card h2 {
+            color: var(--navy);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--navy);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .required {
+            color: var(--error);
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--medium-gray);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.1);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--gold);
+        }
+
+        .checkbox-item label {
+            margin-bottom: 0;
+            font-weight: 400;
+            cursor: pointer;
+        }
+
+        .dietary-section {
+            background: var(--light-gray);
+            padding: 1.25rem;
+            border-radius: 4px;
+            border: 1px solid var(--medium-gray);
+        }
+
+        .dietary-section h3 {
+            color: var(--navy);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--navy) 0%, #003d7a 100%);
+            color: var(--white);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #003d7a 0%, var(--navy) 100%);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--navy);
+            border: 2px solid var(--navy);
+        }
+
+        .btn-secondary:hover {
+            background: var(--navy);
+            color: var(--white);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            color: var(--navy);
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+
+        .confirmation-detail {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+        }
+
+        .confirmation-detail strong {
+            color: var(--navy);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--white);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: var(--error);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--error);
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: var(--success);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--success);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-light);
+            padding: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .container {
+                margin: 1rem auto;
+            }
+
+            .form-card,
+            .event-info,
+            .submitted-diners {
+                padding: 1.5rem;
+            }
+
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        #otherDescription {
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-placeholder">
+            Logo Placeholder
+        </div>
+        <h1>Dining Registration</h1>
+    </div>
+
+    <div class="container">
+        <div id="errorContainer"></div>
+
+        <div class="event-info">
+            <h2 id="eventName">Loading event information...</h2>
+            <div class="event-detail">
+                <strong>Date:</strong> <span id="eventDate">-</span>
+            </div>
+            <div class="menu-section">
+                <h3>Menu</h3>
+                <p id="eventMenu">Loading menu...</p>
+            </div>
+            <div class="cost-notice" id="costNotice">
+                <strong>Cost:</strong> <span id="eventCost">-</span>
+            </div>
+        </div>
+
+        <div class="submitted-diners" id="submittedDinersSection" style="display: none;">
+            <h2>Registered Diners</h2>
+            <ul class="diner-list" id="dinerList"></ul>
+        </div>
+
+        <div class="form-card">
+            <h2>Register a Diner</h2>
+            <form id="dinerForm">
+                <div class="form-group">
+                    <label for="name">Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="dinerType">Diner Type <span class="required">*</span></label>
+                    <select id="dinerType" name="dinerType" required>
+                        <option value="">Please select...</option>
+                        <option value="Member">Member</option>
+                        <option value="Guest">Guest</option>
+                        <option value="Self-funded">Self-funded</option>
+                        <option value="Master's Guest">Master's Guest</option>
+                        <option value="Lodge Guest">Lodge Guest</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="rank">Grand or Provincial Rank</label>
+                    <input type="text" id="rank" name="rank">
+                </div>
+
+                <div class="dietary-section">
+                    <h3>Dietary Requirements</h3>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="vegetarian" name="vegetarian">
+                            <label for="vegetarian">Vegetarian</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="vegan" name="vegan">
+                            <label for="vegan">Vegan</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="pescatarian" name="pescatarian">
+                            <label for="pescatarian">Pescatarian</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gluten" name="gluten">
+                            <label for="gluten">Gluten Free</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="lactose" name="lactose">
+                            <label for="lactose">Lactose Free</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="shellfish" name="shellfish">
+                            <label for="shellfish">No Shellfish</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="fish" name="fish">
+                            <label for="fish">No Fish</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="nuts" name="nuts">
+                            <label for="nuts">No Nuts</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="other" name="other">
+                            <label for="other">Other</label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="otherDescriptionGroup" style="display: none;">
+                        <label for="otherDescription">Please specify other dietary requirements</label>
+                        <input type="text" id="otherDescription" name="otherDescription">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="specialRequests">Special Requests</label>
+                    <textarea id="specialRequests" name="specialRequests" rows="3"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Submit Registration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Diner Details</h3>
+            </div>
+            <div id="confirmationDetails"></div>
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" id="confirmSubmit">Confirm & Submit</button>
+                <button type="button" class="btn btn-secondary" id="cancelSubmit">Edit Details</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const AIRTABLE_API_KEY = 'patFnOPzHvoUPJnzt.be0ba2741be2262dc4cafe6798ea429a8fc84f2c24b6e8d556ac1e9fd6e8ab9';
+        const BASE_ID = 'appt2FP55Rbj2wCux';
+        const DINERS_TABLE = 'Table1';
+        const EVENTS_TABLE = 'Events';
+
+        // State
+        let currentEventData = null;
+        let pendingDiner = null;
+        let submittedDiners = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEventData();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const form = document.getElementById('dinerForm');
+            form.addEventListener('submit', handleFormSubmit);
+
+            document.getElementById('confirmSubmit').addEventListener('click', confirmAndSubmit);
+            document.getElementById('cancelSubmit').addEventListener('click', closeModal);
+
+            const otherCheckbox = document.getElementById('other');
+            otherCheckbox.addEventListener('change', function() {
+                const otherGroup = document.getElementById('otherDescriptionGroup');
+                otherGroup.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+
+        async function loadEventData() {
+            try {
+                console.log('Attempting to load event data...');
+                console.log('URL:', `https://api.airtable.com/v0/${BASE_ID}/${EVENTS_TABLE}`);
+                
+                const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${EVENTS_TABLE}`, {
+                    headers: {
+                        'Authorization': `Bearer ${AIRTABLE_API_KEY}`
+                    }
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Error response:', errorData);
+                    throw new Error(`API Error: ${errorData.error?.type || 'Unknown'} - ${errorData.error?.message || 'Failed to load event data'}`);
+                }
+
+                const data = await response.json();
+                console.log('Received data:', data);
+                
+                // Find active event
+                const activeEvent = data.records.find(record => record.fields['Active Event']);
+                
+                if (activeEvent) {
+                    currentEventData = activeEvent.fields;
+                    displayEventData(currentEventData);
+                    console.log('Active event loaded:', currentEventData);
+                } else {
+                    showError('No active event found. Please make sure one event has the "Active Event" checkbox checked in Airtable.');
+                }
+            } catch (error) {
+                console.error('Error loading event:', error);
+                showError(`Unable to load event information: ${error.message}. Please check the browser console for details.`);
+            }
+        }
+
+        function displayEventData(eventData) {
+            document.getElementById('eventName').textContent = eventData['Event Name'] || 'Event';
+            document.getElementById('eventDate').textContent = formatDate(eventData['Event Date']) || '-';
+            document.getElementById('eventMenu').textContent = eventData['Menu Text'] || 'Menu information not available';
+            
+            const cost = eventData['Cost Per Meal'];
+            if (cost) {
+                document.getElementById('eventCost').textContent = `£${cost.toFixed(2)} per meal (payable by Members and Guests)`;
+            } else {
+                document.getElementById('costNotice').style.display = 'none';
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            pendingDiner = {
+                name: formData.get('name'),
+                dinerType: formData.get('dinerType'),
+                rank: formData.get('rank'),
+                vegetarian: document.getElementById('vegetarian').checked,
+                vegan: document.getElementById('vegan').checked,
+                pescatarian: document.getElementById('pescatarian').checked,
+                gluten: document.getElementById('gluten').checked,
+                lactose: document.getElementById('lactose').checked,
+                shellfish: document.getElementById('shellfish').checked,
+                fish: document.getElementById('fish').checked,
+                nuts: document.getElementById('nuts').checked,
+                other: document.getElementById('other').checked,
+                otherDescription: formData.get('otherDescription'),
+                specialRequests: formData.get('specialRequests')
+            };
+
+            showConfirmationModal(pendingDiner);
+        }
+
+        function showConfirmationModal(diner) {
+            const modal = document.getElementById('confirmationModal');
+            const detailsContainer = document.getElementById('confirmationDetails');
+            
+            // Build dietary requirements string
+            const dietary = [];
+            if (diner.vegetarian) dietary.push('Vegetarian');
+            if (diner.vegan) dietary.push('Vegan');
+            if (diner.pescatarian) dietary.push('Pescatarian');
+            if (diner.gluten) dietary.push('Gluten Free');
+            if (diner.lactose) dietary.push('Lactose Free');
+            if (diner.shellfish) dietary.push('No Shellfish');
+            if (diner.fish) dietary.push('No Fish');
+            if (diner.nuts) dietary.push('No Nuts');
+            if (diner.other && diner.otherDescription) dietary.push(`Other: ${diner.otherDescription}`);
+            
+            const dietaryString = dietary.length > 0 ? dietary.join(', ') : 'None specified';
+
+            detailsContainer.innerHTML = `
+                <div class="confirmation-detail">
+                    <strong>Name</strong>
+                    ${diner.name}
+                </div>
+                <div class="confirmation-detail">
+                    <strong>Diner Type</strong>
+                    ${diner.dinerType}
+                </div>
+                ${diner.rank ? `
+                <div class="confirmation-detail">
+                    <strong>Grand or Provincial Rank</strong>
+                    ${diner.rank}
+                </div>
+                ` : ''}
+                <div class="confirmation-detail">
+                    <strong>Dietary Requirements</strong>
+                    ${dietaryString}
+                </div>
+                ${diner.specialRequests ? `
+                <div class="confirmation-detail">
+                    <strong>Special Requests</strong>
+                    ${diner.specialRequests}
+                </div>
+                ` : ''}
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('confirmationModal');
+            modal.classList.remove('active');
+        }
+
+        async function confirmAndSubmit() {
+            const confirmBtn = document.getElementById('confirmSubmit');
+            const originalText = confirmBtn.innerHTML;
+            confirmBtn.innerHTML = 'Submitting<span class="loading"></span>';
+            confirmBtn.disabled = true;
+
+            try {
+                const airtableData = {
+                    fields: {
+                        'Name': pendingDiner.name,
+                        'Diner Type': pendingDiner.dinerType,
+                        'Grand or Provincial Rank': pendingDiner.rank || '',
+                        'Vegetarian': pendingDiner.vegetarian,
+                        'Vegan': pendingDiner.vegan,
+                        'Pescatarian': pendingDiner.pescatarian,
+                        'Gluten': pendingDiner.gluten,
+                        'Lactose': pendingDiner.lactose,
+                        'Shellfish': pendingDiner.shellfish,
+                        'Fish': pendingDiner.fish,
+                        'Nuts': pendingDiner.nuts,
+                        'Other': pendingDiner.other,
+                        'Other - Description': pendingDiner.otherDescription || '',
+                        'Special requests': pendingDiner.specialRequests || ''
+                    }
+                };
+
+                const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${DINERS_TABLE}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(airtableData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || 'Failed to submit registration');
+                }
+
+                const result = await response.json();
+                
+                // Add to submitted diners list
+                submittedDiners.push({
+                    ...pendingDiner,
+                    id: result.id
+                });
+                
+                updateSubmittedDinersList();
+                resetForm();
+                closeModal();
+                
+                showSuccess(`Successfully registered ${pendingDiner.name}!`);
+                
+            } catch (error) {
+                console.error('Error submitting:', error);
+                showError(`Failed to submit registration: ${error.message}`);
+                confirmBtn.innerHTML = originalText;
+                confirmBtn.disabled = false;
+            }
+        }
+
+        function updateSubmittedDinersList() {
+            const section = document.getElementById('submittedDinersSection');
+            const list = document.getElementById('dinerList');
+            
+            if (submittedDiners.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            
+            list.innerHTML = submittedDiners.map(diner => {
+                const dietary = [];
+                if (diner.vegetarian) dietary.push('Vegetarian');
+                if (diner.vegan) dietary.push('Vegan');
+                if (diner.pescatarian) dietary.push('Pescatarian');
+                if (diner.gluten) dietary.push('Gluten Free');
+                if (diner.lactose) dietary.push('Lactose Free');
+                if (diner.shellfish) dietary.push('No Shellfish');
+                if (diner.fish) dietary.push('No Fish');
+                if (diner.nuts) dietary.push('No Nuts');
+                if (diner.other && diner.otherDescription) dietary.push(`Other: ${diner.otherDescription}`);
+                
+                const dietaryString = dietary.length > 0 ? dietary.join(', ') : 'No dietary requirements';
+
+                return `
+                    <li class="diner-item">
+                        <div class="diner-name">${diner.name}</div>
+                        <div class="diner-details">
+                            <strong>Type:</strong> ${diner.dinerType}
+                            ${diner.rank ? ` | <strong>Rank:</strong> ${diner.rank}` : ''}
+                            <br><strong>Dietary:</strong> ${dietaryString}
+                        </div>
+                    </li>
+                `;
+            }).join('');
+
+            // Scroll to the submitted diners section
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function resetForm() {
+            document.getElementById('dinerForm').reset();
+            document.getElementById('otherDescriptionGroup').style.display = 'none';
+            pendingDiner = null;
+        }
+
+        function showError(message) {
+            const container = document.getElementById('errorContainer');
+            container.innerHTML = `<div class="error-message">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const container = document.getElementById('errorContainer');
+            container.innerHTML = `<div class="success-message">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
