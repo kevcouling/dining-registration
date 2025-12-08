@@ -559,15 +559,18 @@
 
     <script>
         // Configuration
-        const AIRTABLE_API_KEY = 'patFnOPzHvoUPJnzt.717b9291f234ffbe86b20d2f7b54c61fc71a6e62d555717fb76e2e1c0840e620';
-        const BASE_ID = 'appt2FP55Rbj2wCux';
-        const DINERS_TABLE = 'Table1';
-        const EVENTS_TABLE = 'Events';
+        const AIRTABLE_CONFIG = {
+            apiKey: 'patFnOPzHvoUPJnzt.be0ba2741be2262dc4cafe6798ea429a8fc84f2c24b6e8d556ac1e9fd6e8ab9',
+            baseId: 'appt2FP55Rbj2wCux',
+            dinersTable: 'Table1',
+            eventsTable: 'Events'
+        };
 
         // State
         let currentEventData = null;
         let pendingDiner = null;
         let submittedDiners = [];
+        let isLoading = false;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -590,40 +593,71 @@
         }
 
         async function loadEventData() {
+            if (isLoading) return;
+            isLoading = true;
+            
             try {
-                console.log('Attempting to load event data...');
-                console.log('URL:', `https://api.airtable.com/v0/${BASE_ID}/${EVENTS_TABLE}`);
+                console.log('=== Loading Event Data ===');
+                console.log('URL:', `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.eventsTable}`);
+                console.log('API Key (first 20 chars):', AIRTABLE_CONFIG.apiKey.substring(0, 20) + '...');
                 
-                const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${EVENTS_TABLE}`, {
+                const response = await fetch(`https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.eventsTable}`, {
+                    method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${AIRTABLE_API_KEY}`
+                        'Authorization': `Bearer ${AIRTABLE_CONFIG.apiKey}`,
+                        'Content-Type': 'application/json'
                     }
                 });
 
                 console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('Error response:', errorData);
-                    throw new Error(`API Error: ${errorData.error?.type || 'Unknown'} - ${errorData.error?.message || 'Failed to load event data'}`);
+                    const errorText = await response.text();
+                    console.error('=== ERROR RESPONSE ===');
+                    console.error('Status:', response.status);
+                    console.error('Response text:', errorText);
+                    
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(errorText);
+                        console.error('Parsed error:', errorData);
+                    } catch (e) {
+                        throw new Error(`HTTP ${response.status}: ${errorText}`);
+                    }
+                    throw new Error(`${errorData.error?.type || 'API_ERROR'}: ${errorData.error?.message || 'Unknown error'}`);
                 }
 
                 const data = await response.json();
-                console.log('Received data:', data);
+                console.log('=== SUCCESS ===');
+                console.log('Records received:', data.records.length);
+                console.log('Full data:', data);
+                
+                if (data.records.length === 0) {
+                    showError('No events found in the Events table. Please add at least one event in Airtable.');
+                    return;
+                }
                 
                 // Find active event
                 const activeEvent = data.records.find(record => record.fields['Active Event']);
+                console.log('Active event search result:', activeEvent);
                 
                 if (activeEvent) {
                     currentEventData = activeEvent.fields;
                     displayEventData(currentEventData);
-                    console.log('Active event loaded:', currentEventData);
+                    console.log('✓ Active event loaded successfully:', currentEventData);
                 } else {
-                    showError('No active event found. Please make sure one event has the "Active Event" checkbox checked in Airtable.');
+                    console.warn('No active event found. Available events:', data.records.map(r => r.fields));
+                    showError('No active event found. Please check the "Active Event" checkbox for one event in your Airtable Events table.');
                 }
             } catch (error) {
-                console.error('Error loading event:', error);
-                showError(`Unable to load event information: ${error.message}. Please check the browser console for details.`);
+                console.error('=== FATAL ERROR ===');
+                console.error('Error type:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Full error:', error);
+                showError(`Unable to load event: ${error.message}`);
+            } finally {
+                isLoading = false;
             }
         }
 
@@ -730,9 +764,15 @@
 
         async function confirmAndSubmit() {
             const confirmBtn = document.getElementById('confirmSubmit');
+            const cancelBtn = document.getElementById('cancelSubmit');
             const originalText = confirmBtn.innerHTML;
+            
+            console.log('=== SUBMIT BUTTON CLICKED ===');
+            console.log('Pending diner:', pendingDiner);
+            
             confirmBtn.innerHTML = 'Submitting<span class="loading"></span>';
             confirmBtn.disabled = true;
+            cancelBtn.disabled = true;
 
             try {
                 const airtableData = {
@@ -754,21 +794,36 @@
                     }
                 };
 
-                const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${DINERS_TABLE}`, {
+                console.log('Submitting to Airtable:', airtableData);
+                console.log('URL:', `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}`);
+
+                const response = await fetch(`https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+                        'Authorization': `Bearer ${AIRTABLE_CONFIG.apiKey}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(airtableData)
                 });
 
+                console.log('Submit response status:', response.status);
+                console.log('Submit response ok:', response.ok);
+
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorText = await response.text();
+                    console.error('Submit error response:', errorText);
+                    
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(errorText);
+                    } catch (e) {
+                        throw new Error(`HTTP ${response.status}: ${errorText}`);
+                    }
                     throw new Error(errorData.error?.message || 'Failed to submit registration');
                 }
 
                 const result = await response.json();
+                console.log('✓ Successfully submitted! Result:', result);
                 
                 // Add to submitted diners list
                 submittedDiners.push({
@@ -776,17 +831,29 @@
                     id: result.id
                 });
                 
-                updateSubmittedDinersList();
-                resetForm();
+                console.log('Updated submitted diners list:', submittedDiners);
+                
+                // Close modal first
                 closeModal();
                 
+                // Then update the display
+                updateSubmittedDinersList();
+                
+                // Show success message
                 showSuccess(`Successfully registered ${pendingDiner.name}!`);
                 
+                // Reset form for next entry
+                resetForm();
+                
             } catch (error) {
-                console.error('Error submitting:', error);
+                console.error('=== SUBMIT ERROR ===');
+                console.error('Error:', error);
                 showError(`Failed to submit registration: ${error.message}`);
+            } finally {
+                // Always re-enable buttons
                 confirmBtn.innerHTML = originalText;
                 confirmBtn.disabled = false;
+                cancelBtn.disabled = false;
             }
         }
 
