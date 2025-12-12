@@ -441,8 +441,39 @@
 
     <div class="container">
         <div id="errorContainer"></div>
+        
+        <div id="deadlineNotice" class="event-info" style="display: none;">
+            <p id="deadlineText" style="margin: 0;"></p>
+        </div>
 
-        <div class="event-info">
+        <div id="bookingClosedMessage" class="error-message" style="display: none;">
+            <strong>Booking Closed</strong><br>
+            Booking for this event is now closed. If you need to discuss the event, please contact the Treasurer, Kev Couling at <a href="mailto:info@kevincouling.co.uk">info@kevincouling.co.uk</a>
+        </div>
+
+        <div id="bookingModeButtons" class="form-card" style="display: none; text-align: center;">
+            <h2 style="margin-bottom: 2rem;">How would you like to proceed?</h2>
+            <div class="button-group" style="justify-content: center;">
+                <button type="button" class="btn btn-primary" id="startNewBookingBtn" style="min-width: 200px;">Start a New Booking</button>
+                <button type="button" class="btn btn-secondary" id="amendBookingBtn" style="min-width: 200px;">Amend an Existing Booking</button>
+            </div>
+        </div>
+
+        <div id="amendBookingRefInput" class="form-card" style="display: none;">
+            <h2>Enter Your Booking Reference</h2>
+            <form id="bookingRefForm">
+                <div class="form-group">
+                    <label for="bookingRefInput">Booking Reference <span class="required">*</span></label>
+                    <input type="text" id="bookingRefInput" name="bookingRef" placeholder="e.g. 251212-001" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Retrieve Booking</button>
+                    <button type="button" class="btn btn-secondary" id="cancelAmendBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="event-info" id="eventInfoSection" style="display: none;">
             <h2 id="eventName">Loading event information...</h2>
             <div class="event-detail">
                 <strong>Date:</strong> <span id="eventDate">-</span>
@@ -461,7 +492,7 @@
             <ul class="diner-list" id="dinerList"></ul>
         </div>
 
-        <div class="form-card">
+        <div class="form-card" id="dinerFormCard" style="display: none;">
             <h2>Register a Diner</h2>
             <form id="dinerForm">
                 <div class="form-group">
@@ -474,10 +505,11 @@
                     <select id="dinerType" name="dinerType" required>
                         <option value="">Please select...</option>
                         <option value="Member">Member</option>
+                        <option value="Hicks Beach WM">Hicks Beach WM</option>
                         <option value="Guest">Guest</option>
-                        <option value="Self-funded">Self-funded</option>
                         <option value="Master's Guest">Master's Guest</option>
                         <option value="Lodge Guest">Lodge Guest</option>
+                        <option value="Self-funded">Self-funded</option>
                     </select>
                 </div>
 
@@ -560,9 +592,9 @@
     <script>
         // Configuration
         const AIRTABLE_CONFIG = {
-            apiKey: 'patMyc5PGPkNeAfSr.7b0657295556f7cf8b306a7e0b71d5e4fa799c5a94cd806309fd70207fd86fbf',
+            apiKey: 'patlpSPboR2VXuX4s.2356c73072130e640a12b23cf4ba27ef000afd84f615c6ec5d8d012c82d2bd27',
             baseId: 'appt2FP55Rbj2wCux',
-            dinersTable: 'Table1',
+            dinersTable: 'Diners',
             eventsTable: 'Events'
         };
 
@@ -571,6 +603,8 @@
         let pendingDiner = null;
         let submittedDiners = [];
         let isLoading = false;
+        let bookingMode = null; // 'new' or 'amend'
+        let currentBookingRef = null;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -590,6 +624,14 @@
                 const otherGroup = document.getElementById('otherDescriptionGroup');
                 otherGroup.style.display = this.checked ? 'block' : 'none';
             });
+
+            // Booking mode buttons
+            document.getElementById('startNewBookingBtn').addEventListener('click', startNewBooking);
+            document.getElementById('amendBookingBtn').addEventListener('click', showAmendBookingInput);
+            document.getElementById('cancelAmendBtn').addEventListener('click', cancelAmendBooking);
+            
+            // Booking ref form
+            document.getElementById('bookingRefForm').addEventListener('submit', handleBookingRefSubmit);
         }
 
         async function loadEventData() {
@@ -672,6 +714,140 @@
             } else {
                 document.getElementById('costNotice').style.display = 'none';
             }
+
+            // Show deadline notice
+            const lastDayToBook = eventData['Last Day To Book'];
+            if (lastDayToBook) {
+                const deadlineNotice = document.getElementById('deadlineNotice');
+                const deadlineText = document.getElementById('deadlineText');
+                deadlineText.innerHTML = `<strong>The last day for booking or amendments is ${formatDate(lastDayToBook)}.</strong>`;
+                deadlineNotice.style.display = 'block';
+
+                // Check if booking is closed
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const deadline = new Date(lastDayToBook);
+                deadline.setHours(0, 0, 0, 0);
+
+                if (today > deadline) {
+                    // Booking is closed
+                    document.getElementById('bookingClosedMessage').style.display = 'block';
+                    return; // Don't show booking options
+                }
+            }
+
+            // Show booking mode buttons
+            document.getElementById('bookingModeButtons').style.display = 'block';
+        }
+
+        function startNewBooking() {
+            bookingMode = 'new';
+            currentBookingRef = generateBookingRef();
+            
+            // Hide mode selection, show event info and form
+            document.getElementById('bookingModeButtons').style.display = 'none';
+            document.getElementById('eventInfoSection').style.display = 'block';
+            document.getElementById('dinerFormCard').style.display = 'block';
+            
+            console.log('Starting new booking with ref:', currentBookingRef);
+        }
+
+        function showAmendBookingInput() {
+            bookingMode = 'amend';
+            
+            // Hide mode selection, show booking ref input
+            document.getElementById('bookingModeButtons').style.display = 'none';
+            document.getElementById('amendBookingRefInput').style.display = 'block';
+        }
+
+        function cancelAmendBooking() {
+            bookingMode = null;
+            currentBookingRef = null;
+            
+            // Show mode selection, hide booking ref input
+            document.getElementById('amendBookingRefInput').style.display = 'none';
+            document.getElementById('bookingModeButtons').style.display = 'block';
+            
+            // Clear the input
+            document.getElementById('bookingRefInput').value = '';
+        }
+
+        async function handleBookingRefSubmit(e) {
+            e.preventDefault();
+            
+            const bookingRef = document.getElementById('bookingRefInput').value.trim();
+            console.log('Retrieving booking:', bookingRef);
+            
+            try {
+                // Search for booking in Airtable
+                const formula = encodeURIComponent(`{Booking Ref} = '${bookingRef}'`);
+                const response = await fetch(
+                    `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula=${formula}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${AIRTABLE_CONFIG.apiKey}`
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('Failed to retrieve booking');
+                }
+
+                const data = await response.json();
+                
+                if (data.records.length === 0) {
+                    showError('Booking reference not found. Please check and try again.');
+                    return;
+                }
+
+                // Load the booking
+                currentBookingRef = bookingRef;
+                submittedDiners = data.records.map(record => ({
+                    id: record.id,
+                    name: record.fields['Name'],
+                    dinerType: record.fields['Diner Type'],
+                    rank: record.fields['Grand or Provincial Rank'],
+                    vegetarian: record.fields['Vegetarian'] || false,
+                    vegan: record.fields['Vegan'] || false,
+                    pescatarian: record.fields['Pescatarian'] || false,
+                    gluten: record.fields['Gluten'] || false,
+                    lactose: record.fields['Lactose'] || false,
+                    shellfish: record.fields['Shellfish'] || false,
+                    fish: record.fields['Fish'] || false,
+                    nuts: record.fields['Nuts'] || false,
+                    other: record.fields['Other'] || false,
+                    otherDescription: record.fields['Other Description'] || '',
+                    specialRequests: record.fields['Special Requests'] || '',
+                    guestOf: record.fields['Guest Of'] || '',
+                    recordId: record.id
+                }));
+
+                // Show event info, diners, and form
+                document.getElementById('amendBookingRefInput').style.display = 'none';
+                document.getElementById('eventInfoSection').style.display = 'block';
+                document.getElementById('dinerFormCard').style.display = 'block';
+                updateSubmittedDinersList();
+                
+                showSuccess(`Booking ${bookingRef} retrieved successfully!`);
+                
+            } catch (error) {
+                console.error('Error retrieving booking:', error);
+                showError(`Failed to retrieve booking: ${error.message}`);
+            }
+        }
+
+        function generateBookingRef() {
+            const now = new Date();
+            const year = now.getFullYear().toString().slice(-2);
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            
+            // For now, use a random 3-digit number
+            // In Phase 2, we'll make this sequential based on existing bookings
+            const sequence = Math.floor(Math.random() * 900) + 100;
+            
+            return `${year}${month}${day}-${sequence}`;
         }
 
         function formatDate(dateString) {
@@ -778,8 +954,12 @@
                 const airtableData = {
                     fields: {
                         'Name': pendingDiner.name,
+                        'Booking Ref': currentBookingRef,
+                        'Event Date': currentEventData['Event Date'],
                         'Diner Type': pendingDiner.dinerType,
                         'Grand or Provincial Rank': pendingDiner.rank || '',
+                        'Guest Of': pendingDiner.guestOf || '',
+                        'Total To Pay': 0, // Will be calculated in Phase 3
                         'Vegetarian': pendingDiner.vegetarian,
                         'Vegan': pendingDiner.vegan,
                         'Pescatarian': pendingDiner.pescatarian,
@@ -789,8 +969,8 @@
                         'Fish': pendingDiner.fish,
                         'Nuts': pendingDiner.nuts,
                         'Other': pendingDiner.other,
-                        'Other - Description': pendingDiner.otherDescription || '',
-                        'Special requests': pendingDiner.specialRequests || ''
+                        'Other Description': pendingDiner.otherDescription || '',
+                        'Special Requests': pendingDiner.specialRequests || ''
                     }
                 };
 
