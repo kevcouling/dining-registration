@@ -157,6 +157,124 @@
             list-style: none;
         }
 
+        .diners-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        .diners-table th,
+        .diners-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .diners-table th {
+            background: var(--navy);
+            color: var(--white);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .diners-table tbody tr {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .diners-table tbody tr:hover {
+            background-color: var(--light-gray);
+        }
+
+        .diners-table td {
+            font-size: 0.9rem;
+        }
+
+        .table-totals {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--gold);
+        }
+
+        .table-totals h3 {
+            color: var(--navy);
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .totals-list {
+            list-style: none;
+        }
+
+        .totals-list li {
+            padding: 0.5rem;
+            background: var(--light-gray);
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .edit-note {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .diners-table {
+                font-size: 0.85rem;
+            }
+
+            .diners-table th,
+            .diners-table td {
+                padding: 0.5rem 0.25rem;
+            }
+
+            /* Stack table on very small screens */
+            @media (max-width: 600px) {
+                .diners-table thead {
+                    display: none;
+                }
+
+                .diners-table, 
+                .diners-table tbody, 
+                .diners-table tr, 
+                .diners-table td {
+                    display: block;
+                    width: 100%;
+                }
+
+                .diners-table tr {
+                    margin-bottom: 1rem;
+                    border: 1px solid var(--medium-gray);
+                    border-radius: 4px;
+                    padding: 0.5rem;
+                }
+
+                .diners-table td {
+                    text-align: right;
+                    padding-left: 50%;
+                    position: relative;
+                    border-bottom: 1px solid var(--light-gray);
+                }
+
+                .diners-table td:last-child {
+                    border-bottom: none;
+                }
+
+                .diners-table td::before {
+                    content: attr(data-label);
+                    position: absolute;
+                    left: 0.5rem;
+                    font-weight: 600;
+                    color: var(--navy);
+                }
+            }
+        }
+
         .diner-item {
             background: var(--light-gray);
             padding: 1rem;
@@ -489,7 +607,8 @@
 
         <div class="submitted-diners" id="submittedDinersSection" style="display: none;">
             <h2>Registered Diners</h2>
-            <ul class="diner-list" id="dinerList"></ul>
+            <div id="dinersTableContainer"></div>
+            <p class="edit-note">Click a name to edit</p>
         </div>
 
         <div class="form-card" id="dinerFormCard" style="display: none;">
@@ -616,6 +735,7 @@
         let bookingMode = null; // 'new' or 'amend'
         let currentBookingRef = null;
         let registeredMembersFromAirtable = []; // Members already in Airtable for this event
+        let editingDinerIndex = null; // Index of diner being edited, null if adding new
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -1127,16 +1247,38 @@
                 };
 
                 console.log('Submitting to Airtable:', airtableData);
-                console.log('URL:', `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}`);
+                console.log('Editing mode:', editingDinerIndex !== null);
+                
+                let response;
+                let result;
 
-                const response = await fetch(`https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${AIRTABLE_CONFIG.apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(airtableData)
-                });
+                if (editingDinerIndex !== null) {
+                    // UPDATE existing diner
+                    const recordId = submittedDiners[editingDinerIndex].recordId || submittedDiners[editingDinerIndex].id;
+                    console.log('Updating record ID:', recordId);
+                    console.log('URL:', `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}/${recordId}`);
+                    
+                    response = await fetch(`https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}/${recordId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${AIRTABLE_CONFIG.apiKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(airtableData)
+                    });
+                } else {
+                    // CREATE new diner
+                    console.log('URL:', `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}`);
+                    
+                    response = await fetch(`https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${AIRTABLE_CONFIG.apiKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(airtableData)
+                    });
+                }
 
                 console.log('Submit response status:', response.status);
                 console.log('Submit response ok:', response.ok);
@@ -1154,27 +1296,42 @@
                     throw new Error(errorData.error?.message || 'Failed to submit registration');
                 }
 
-                const result = await response.json();
+                result = await response.json();
                 console.log('✓ Successfully submitted! Result:', result);
                 
-                // Add to submitted diners list (reuse individualCost from above)
-                submittedDiners.push({
-                    ...pendingDiner,
-                    id: result.id,
-                    guestOf: guestOfValue,
-                    cost: individualCost
-                });
+                // Update submitted diners list
+                if (editingDinerIndex !== null) {
+                    // Update existing diner
+                    submittedDiners[editingDinerIndex] = {
+                        ...pendingDiner,
+                        id: result.id,
+                        recordId: result.id,
+                        guestOf: guestOfValue,
+                        cost: individualCost
+                    };
+                    showSuccess(`Successfully updated ${pendingDiner.name}!`);
+                } else {
+                    // Add new diner
+                    submittedDiners.push({
+                        ...pendingDiner,
+                        id: result.id,
+                        recordId: result.id,
+                        guestOf: guestOfValue,
+                        cost: individualCost
+                    });
+                    showSuccess(`Successfully registered ${pendingDiner.name}!`);
+                }
                 
                 console.log('Updated submitted diners list:', submittedDiners);
+                
+                // Reset editing mode
+                editingDinerIndex = null;
                 
                 // Close modal first
                 closeModal();
                 
                 // Then update the display
                 updateSubmittedDinersList();
-                
-                // Show success message
-                showSuccess(`Successfully registered ${pendingDiner.name}!`);
                 
                 // Reset form for next entry
                 resetForm();
@@ -1193,7 +1350,7 @@
 
         function updateSubmittedDinersList() {
             const section = document.getElementById('submittedDinersSection');
-            const list = document.getElementById('dinerList');
+            const container = document.getElementById('dinersTableContainer');
             
             if (submittedDiners.length === 0) {
                 section.style.display = 'none';
@@ -1202,7 +1359,22 @@
 
             section.style.display = 'block';
             
-            list.innerHTML = submittedDiners.map(diner => {
+            // Build table
+            let tableHtml = `
+                <table class="diners-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Diner Type</th>
+                            <th>Guest Of</th>
+                            <th>Cost</th>
+                            <th>Dietary Requirements</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            submittedDiners.forEach((diner, index) => {
                 const dietary = [];
                 if (diner.vegetarian) dietary.push('Vegetarian');
                 if (diner.vegan) dietary.push('Vegan');
@@ -1214,36 +1386,82 @@
                 if (diner.nuts) dietary.push('No Nuts');
                 if (diner.other && diner.otherDescription) dietary.push(`Other: ${diner.otherDescription}`);
                 
-                const dietaryString = dietary.length > 0 ? dietary.join(', ') : 'No dietary requirements';
+                const dietaryString = dietary.length > 0 ? dietary.join(', ') : 'None';
                 const cost = diner.cost !== undefined ? diner.cost : 0;
+                const guestOf = diner.guestOf || '-';
 
-                return `
-                    <li class="diner-item">
-                        <div class="diner-name">${diner.name}</div>
-                        <div class="diner-details">
-                            <strong>Type:</strong> ${diner.dinerType}
-                            ${diner.rank ? ` | <strong>Rank:</strong> ${diner.rank}` : ''}
-                            ${diner.guestOf ? ` | <strong>Guest Of:</strong> ${diner.guestOf}` : ''}
-                            | <strong>Cost:</strong> £${cost.toFixed(2)}
-                            <br><strong>Dietary:</strong> ${dietaryString}
-                        </div>
-                    </li>
+                tableHtml += `
+                    <tr onclick="editDiner(${index})" data-index="${index}">
+                        <td data-label="Name">${diner.name}</td>
+                        <td data-label="Diner Type">${diner.dinerType}</td>
+                        <td data-label="Guest Of">${guestOf}</td>
+                        <td data-label="Cost">£${cost.toFixed(2)}</td>
+                        <td data-label="Dietary">${dietaryString}</td>
+                    </tr>
                 `;
-            }).join('');
+            });
+
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
 
             // Calculate and display totals per paying member
             const totals = calculateTotalsPerMember();
             if (Object.keys(totals).length > 0) {
-                let totalsHtml = '<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid var(--gold);"><strong>Totals to Pay:</strong><ul style="list-style: none; margin-top: 0.5rem;">';
+                tableHtml += '<div class="table-totals"><h3>Totals to Pay:</h3><ul class="totals-list">';
                 for (const [member, total] of Object.entries(totals)) {
-                    totalsHtml += `<li style="padding: 0.25rem 0;"><strong>${member}:</strong> £${total.toFixed(2)}</li>`;
+                    tableHtml += `<li><strong>${member}</strong><span>£${total.toFixed(2)}</span></li>`;
                 }
-                totalsHtml += '</ul></div>';
-                list.innerHTML += totalsHtml;
+                tableHtml += '</ul></div>';
             }
+
+            container.innerHTML = tableHtml;
 
             // Scroll to the submitted diners section
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function editDiner(index) {
+            console.log('Editing diner at index:', index);
+            const diner = submittedDiners[index];
+            
+            // Set editing mode
+            editingDinerIndex = index;
+            
+            // Populate form with existing data
+            document.getElementById('name').value = diner.name || '';
+            document.getElementById('dinerType').value = diner.dinerType || '';
+            document.getElementById('rank').value = diner.rank || '';
+            document.getElementById('vegetarian').checked = diner.vegetarian || false;
+            document.getElementById('vegan').checked = diner.vegan || false;
+            document.getElementById('pescatarian').checked = diner.pescatarian || false;
+            document.getElementById('gluten').checked = diner.gluten || false;
+            document.getElementById('lactose').checked = diner.lactose || false;
+            document.getElementById('shellfish').checked = diner.shellfish || false;
+            document.getElementById('fish').checked = diner.fish || false;
+            document.getElementById('nuts').checked = diner.nuts || false;
+            document.getElementById('other').checked = diner.other || false;
+            document.getElementById('otherDescription').value = diner.otherDescription || '';
+            document.getElementById('specialRequests').value = diner.specialRequests || '';
+            
+            // Handle Guest Of field
+            if (diner.dinerType === 'Guest') {
+                handleDinerTypeChange();
+                setTimeout(() => {
+                    document.getElementById('guestOf').value = diner.guestOf || '';
+                }, 100);
+            }
+            
+            // Show other description if needed
+            if (diner.other) {
+                document.getElementById('otherDescriptionGroup').style.display = 'block';
+            }
+            
+            // Scroll to form
+            document.getElementById('dinerFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            showSuccess('Editing diner - update the form and click Submit to save changes');
         }
 
         function calculateTotalsPerMember() {
@@ -1267,6 +1485,7 @@
             document.getElementById('otherDescriptionGroup').style.display = 'none';
             document.getElementById('guestOfGroup').style.display = 'none';
             pendingDiner = null;
+            editingDinerIndex = null;
         }
 
         function showError(message) {
