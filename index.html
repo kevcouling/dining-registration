@@ -719,6 +719,9 @@
         }
 
         function displayEventData(eventData) {
+            console.log('=== DISPLAYING EVENT DATA ===');
+            console.log('Event data received:', eventData);
+            
             document.getElementById('eventName').textContent = eventData['Event Name'] || 'Event';
             document.getElementById('eventDate').textContent = formatDate(eventData['Event Date']) || '-';
             document.getElementById('eventMenu').textContent = eventData['Menu Text'] || 'Menu information not available';
@@ -732,6 +735,8 @@
 
             // Show deadline notice
             const lastDayToBook = eventData['Last Day To Book'];
+            console.log('Last Day To Book:', lastDayToBook);
+            
             if (lastDayToBook) {
                 const deadlineNotice = document.getElementById('deadlineNotice');
                 const deadlineText = document.getElementById('deadlineText');
@@ -744,14 +749,20 @@
                 const deadline = new Date(lastDayToBook);
                 deadline.setHours(0, 0, 0, 0);
 
+                console.log('Today:', today);
+                console.log('Deadline:', deadline);
+                console.log('Is booking closed?', today > deadline);
+
                 if (today > deadline) {
                     // Booking is closed
+                    console.log('Booking is closed - showing message');
                     document.getElementById('bookingClosedMessage').style.display = 'block';
                     return; // Don't show booking options
                 }
             }
 
             // Show booking mode buttons
+            console.log('Showing booking mode buttons');
             document.getElementById('bookingModeButtons').style.display = 'block';
         }
 
