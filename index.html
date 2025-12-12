@@ -1149,7 +1149,7 @@
 
             // Calculate cost
             const costPerMeal = currentEventData['Cost Per Meal'] || 0;
-            const cost = (diner.dinerType === 'Member' || diner.dinerType === 'Guest') ? costPerMeal : 0;
+            const cost = (diner.dinerType === 'Master\'s Guest' || diner.dinerType === 'Lodge Guest') ? 0 : costPerMeal;
 
             detailsContainer.innerHTML = `
                 <div class="confirmation-detail">
@@ -1221,7 +1221,7 @@
 
                 // Calculate cost
                 const costPerMeal = currentEventData['Cost Per Meal'] || 0;
-                const individualCost = (pendingDiner.dinerType === 'Member' || pendingDiner.dinerType === 'Guest') ? costPerMeal : 0;
+                const individualCost = (pendingDiner.dinerType === 'Master\'s Guest' || pendingDiner.dinerType === 'Lodge Guest') ? 0 : costPerMeal;
 
                 const airtableData = {
                     fields: {
@@ -1332,6 +1332,9 @@
                 
                 // Then update the display
                 updateSubmittedDinersList();
+                
+                // Update totals in Airtable
+                await updateTotalsToPay();
                 
                 // Reset form for next entry
                 resetForm();
@@ -1462,6 +1465,54 @@
             document.getElementById('dinerFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
             
             showSuccess('Editing diner - update the form and click Submit to save changes');
+        }
+
+        async function updateTotalsToPay() {
+            console.log('=== UPDATING TOTALS TO PAY ===');
+            
+            // Calculate totals per paying member
+            const totals = calculateTotalsPerMember();
+            console.log('Calculated totals:', totals);
+            
+            // Update each member's Total To Pay in Airtable
+            const updatePromises = [];
+            
+            for (const diner of submittedDiners) {
+                const guestOf = diner.guestOf || diner.name;
+                const totalToPay = totals[guestOf] || 0;
+                
+                // Only update if this person is the one paying (their name matches guestOf)
+                if (diner.name === guestOf) {
+                    const recordId = diner.recordId || diner.id;
+                    
+                    console.log(`Updating ${diner.name} with total: £${totalToPay}`);
+                    
+                    const updateData = {
+                        fields: {
+                            'Total To Pay': totalToPay
+                        }
+                    };
+                    
+                    const promise = fetch(`https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}/${recordId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${AIRTABLE_CONFIG.apiKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(updateData)
+                    });
+                    
+                    updatePromises.push(promise);
+                }
+            }
+            
+            // Wait for all updates to complete
+            try {
+                await Promise.all(updatePromises);
+                console.log('✓ All totals updated successfully');
+            } catch (error) {
+                console.error('Error updating totals:', error);
+            }
         }
 
         function calculateTotalsPerMember() {
