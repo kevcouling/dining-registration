@@ -1157,11 +1157,7 @@
                 const result = await response.json();
                 console.log('✓ Successfully submitted! Result:', result);
                 
-                // Calculate cost for display
-                const costPerMeal = currentEventData['Cost Per Meal'] || 0;
-                const individualCost = (pendingDiner.dinerType === 'Member' || pendingDiner.dinerType === 'Guest') ? costPerMeal : 0;
-                
-                // Add to submitted diners list
+                // Add to submitted diners list (reuse individualCost from above)
                 submittedDiners.push({
                     ...pendingDiner,
                     id: result.id,
