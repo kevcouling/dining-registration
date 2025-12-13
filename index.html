@@ -891,6 +891,18 @@
             const guestOfGroup = document.getElementById('guestOfGroup');
             const guestOfSelect = document.getElementById('guestOf');
 
+            // Check if Hicks Beach WM already exists
+            if (dinerType === 'Hicks Beach WM') {
+                const wmInSession = submittedDiners.some(d => d.dinerType === 'Hicks Beach WM');
+                const wmInAirtable = registeredMembersFromAirtable.some(d => d.dinerType === 'Hicks Beach WM');
+                
+                if (wmInSession || wmInAirtable) {
+                    showError('The Worshipful Master has already been booked into the meeting. Please contact the Treasurer, Kev Couling, at info@kevincouling.co.uk if you think this is wrong.');
+                    document.getElementById('dinerType').value = '';
+                    return;
+                }
+            }
+
             // Check if Guest or Master's Guest requires a member to be registered
             if (dinerType === 'Guest' || dinerType === 'Master\'s Guest') {
                 // Get all members (from submitted diners in current session + Airtable)
