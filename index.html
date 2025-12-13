@@ -905,7 +905,7 @@
                 
                 if (wmInSession || wmInAirtable) {
                     console.log('WM already exists - showing error');
-                    showError('The Worshipful Master has already been booked into the meeting. Please contact the Treasurer, Kev Couling, at info@kevincouling.co.uk if you think this is wrong.');
+                    alert('The Worshipful Master has already been booked into the meeting. Please contact the Treasurer, Kev Couling, at info@kevincouling.co.uk if you think this is wrong.');
                     document.getElementById('dinerType').value = '';
                     return;
                 }
@@ -918,8 +918,11 @@
                     d.dinerType === 'Member' || d.dinerType === 'Hicks Beach WM'
                 );
                 
+                console.log('Members in session:', membersInSession);
+                console.log('Members from Airtable:', registeredMembersFromAirtable);
+                
                 if (membersInSession.length === 0 && registeredMembersFromAirtable.length === 0) {
-                    showError('Please register at least one member before registering guests or Master\'s guests');
+                    alert('Please register at least one member before registering guests or Master\'s guests');
                     document.getElementById('dinerType').value = '';
                     return;
                 }
@@ -1358,6 +1361,9 @@
                 
                 // Close modal first
                 closeModal();
+                
+                // Reload registered members from Airtable
+                await loadRegisteredMembers();
                 
                 // Then update the display
                 updateSubmittedDinersList();
