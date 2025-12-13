@@ -891,17 +891,26 @@
             const guestOfGroup = document.getElementById('guestOfGroup');
             const guestOfSelect = document.getElementById('guestOf');
 
-            if (dinerType === 'Guest') {
+            // Check if Guest or Master's Guest requires a member to be registered
+            if (dinerType === 'Guest' || dinerType === 'Master\'s Guest') {
                 // Get all members (from submitted diners in current session + Airtable)
                 const membersInSession = submittedDiners.filter(d => 
                     d.dinerType === 'Member' || d.dinerType === 'Hicks Beach WM'
                 );
                 
                 if (membersInSession.length === 0 && registeredMembersFromAirtable.length === 0) {
-                    showError('Please register at least one member before registering guests');
+                    showError('Please register at least one member before registering guests or Master\'s guests');
                     document.getElementById('dinerType').value = '';
                     return;
                 }
+            }
+
+            // Only show Guest Of dropdown for regular Guests
+            if (dinerType === 'Guest') {
+                // Get all members (from submitted diners in current session + Airtable)
+                const membersInSession = submittedDiners.filter(d => 
+                    d.dinerType === 'Member' || d.dinerType === 'Hicks Beach WM'
+                );
 
                 // Populate the dropdown
                 guestOfSelect.innerHTML = '<option value="">Please select...</option>';
