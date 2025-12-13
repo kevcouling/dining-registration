@@ -1411,9 +1411,13 @@
 
             // Calculate and display totals per paying member
             const totals = calculateTotalsPerMember();
-            if (Object.keys(totals).length > 0) {
+            
+            // Filter out members with £0 total
+            const payingTotals = Object.entries(totals).filter(([member, total]) => total > 0);
+            
+            if (payingTotals.length > 0) {
                 tableHtml += '<div class="table-totals"><h3>Totals to Pay:</h3><ul class="totals-list">';
-                for (const [member, total] of Object.entries(totals)) {
+                for (const [member, total] of payingTotals) {
                     tableHtml += `<li><strong>${member}</strong><span>£${total.toFixed(2)}</span></li>`;
                 }
                 tableHtml += '</ul></div>';
