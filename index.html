@@ -634,7 +634,6 @@
         <div class="submitted-diners" id="submittedDinersSection" style="display: none;">
             <h2>Registered Diners</h2>
             <div id="dinersTableContainer"></div>
-            <p class="edit-note">Click a name to edit | Click trash icon to delete</p>
             <div style="margin-top: 1.5rem; text-align: center;">
                 <button type="button" class="btn btn-primary" id="completeBookingBtn" style="min-width: 200px;">Complete Booking</button>
             </div>
@@ -768,7 +767,7 @@
 
     <script>
         // App Version
-        const APP_VERSION = 'Phase 5 - v5.2 - Complete with Delete & Counter';
+        const APP_VERSION = 'Phase 5 - v5.3 - Final Polish';
         console.log('========================================');
         console.log('DINING REGISTRATION APP');
         console.log('Version:', APP_VERSION);
@@ -996,7 +995,7 @@
                 console.log('Remaining:', limit - totalMastersGuests);
                 
                 if (totalMastersGuests >= limit) {
-                    alert('Please register any further diners as normal guests');
+                    alert('The maximum number of Worshipful Master\'s guests have already been booked in. Please register as a normal guest.');
                     document.getElementById('dinerType').value = '';
                     return;
                 }
@@ -1547,7 +1546,8 @@
             const totalMastersGuests = mastersGuestsInSession + mastersGuestsInAirtable;
             const remaining = limit - totalMastersGuests;
             
-            if (limit > 0) {
+            // Only show if limit > 0 AND there are registered diners (not on initial load)
+            if (limit > 0 && (submittedDiners.length > 0 || totalMastersGuests > 0)) {
                 counter.style.display = 'block';
                 counterText.textContent = `Master's Guests: ${totalMastersGuests} of ${limit} used (${remaining} remaining)`;
                 
@@ -1805,8 +1805,11 @@
 
             container.innerHTML = tableHtml;
 
-            // Scroll to the submitted diners section
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Scroll to the Complete Booking button
+            const completeBtn = document.getElementById('completeBookingBtn');
+            setTimeout(() => {
+                completeBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
         }
 
         function editDiner(index) {
