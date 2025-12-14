@@ -720,7 +720,7 @@
 
     <script>
         // App Version
-        const APP_VERSION = 'Phase 4 - v4.6 - Date Query Fix';
+        const APP_VERSION = 'Phase 4 - v4.8 - European Date Format Fix';
         console.log('========================================');
         console.log('DINING REGISTRATION APP');
         console.log('Version:', APP_VERSION);
@@ -1006,19 +1006,11 @@
                 // Get ALL diners for this event date
                 const eventDate = currentEventData['Event Date'];
                 
-                // Convert ISO date to European format DD/MM/YYYY for Airtable formula
-                const date = new Date(eventDate);
-                const day = date.getDate();
-                const month = date.getMonth() + 1;
-                const year = date.getFullYear();
-                const europeanDate = `${day}/${month}/${year}`;
-                
-                // Use DATESTR to compare dates properly in Airtable
-                const formula = encodeURIComponent(`DATESTR({Event Date}) = '${europeanDate}'`);
+                // Use IS_SAME to compare dates - works regardless of format
+                const formula = encodeURIComponent(`IS_SAME({Event Date}, '${eventDate}', 'day')`);
                 
                 console.log('=== LOADING REGISTERED DINERS ===');
-                console.log('Event date (ISO):', eventDate);
-                console.log('Event date (European):', europeanDate);
+                console.log('Event date:', eventDate);
                 console.log('Formula:', decodeURIComponent(formula));
                 console.log('Full URL:', `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula=${formula}`);
                 
@@ -1173,6 +1165,24 @@
 
         function formatDate(dateString) {
             if (!dateString) return '-';
+            
+            // Check if it's in DD/MM/YY or DD/MM/YYYY format (text from Airtable formula)
+            if (typeof dateString === 'string' && dateString.match(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/)) {
+                const parts = dateString.split('/');
+                const day = parseInt(parts[0]);
+                const month = parseInt(parts[1]) - 1; // JS months are 0-indexed
+                const year = parts[2].length === 2 ? 2000 + parseInt(parts[2]) : parseInt(parts[2]);
+                const date = new Date(year, month, day);
+                
+                return date.toLocaleDateString('en-GB', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+            }
+            
+            // Otherwise treat as ISO date string
             const date = new Date(dateString);
             return date.toLocaleDateString('en-GB', { 
                 weekday: 'long', 
