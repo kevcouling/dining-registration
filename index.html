@@ -178,12 +178,38 @@
         }
 
         .diners-table tbody tr {
-            cursor: pointer;
+            cursor: default;
             transition: background-color 0.2s;
         }
 
         .diners-table tbody tr:hover {
             background-color: var(--light-gray);
+        }
+
+        .action-icons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .action-icon {
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            font-size: 1.1rem;
+        }
+
+        .action-icon:hover {
+            background-color: var(--medium-gray);
+        }
+
+        .edit-icon {
+            color: var(--navy);
+        }
+
+        .delete-icon {
+            color: #c41e3a;
         }
 
         .diners-table td {
@@ -608,11 +634,20 @@
         <div class="submitted-diners" id="submittedDinersSection" style="display: none;">
             <h2>Registered Diners</h2>
             <div id="dinersTableContainer"></div>
-            <p class="edit-note">Click a name to edit</p>
+            <p class="edit-note">Click a name to edit | Click trash icon to delete</p>
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <button type="button" class="btn btn-primary" id="completeBookingBtn" style="min-width: 200px;">Complete Booking</button>
+            </div>
         </div>
 
         <div class="form-card" id="dinerFormCard" style="display: none;">
             <h2>Register a Diner</h2>
+            
+            <!-- Master's Guest Counter -->
+            <div id="mastersGuestCounter" style="display: none; padding: 0.75rem; margin-bottom: 1rem; background: var(--light-gray); border-left: 4px solid var(--gold); border-radius: 4px;">
+                <strong id="mastersGuestCounterText"></strong>
+            </div>
+            
             <form id="dinerForm">
                 <div class="form-group">
                     <label for="name">Name <span class="required">*</span></label>
@@ -733,7 +768,7 @@
 
     <script>
         // App Version
-        const APP_VERSION = 'Phase 5 - v5.1 - Debug Master\'s Guest Limits';
+        const APP_VERSION = 'Phase 5 - v5.2 - Complete with Delete & Counter';
         console.log('========================================');
         console.log('DINING REGISTRATION APP');
         console.log('Version:', APP_VERSION);
@@ -772,6 +807,7 @@
             document.getElementById('cancelSubmit').addEventListener('click', closeModal);
             
             document.getElementById('closePaymentModal').addEventListener('click', closePaymentModal);
+            document.getElementById('completeBookingBtn').addEventListener('click', completeBooking);
 
             const otherCheckbox = document.getElementById('other');
             otherCheckbox.addEventListener('change', function() {
@@ -942,18 +978,21 @@
                 console.log('=== CHECKING MASTER\'S GUEST LIMIT ===');
                 
                 const limit = currentEventData['Number of Master\'s Guests'] || 0;
-                console.log('Limit from Events table:', limit);
-                console.log('All diners in session:', submittedDiners);
-                console.log('All diners from Airtable:', allDinersFromAirtable);
                 
                 const mastersGuestsInSession = submittedDiners.filter(d => d.dinerType === 'Master\'s Guest').length;
-                const mastersGuestsInAirtable = allDinersFromAirtable.filter(d => d.dinerType === 'Master\'s Guest').length;
+                
+                // Only count Airtable diners NOT in current booking to avoid double counting
+                const mastersGuestsInAirtable = allDinersFromAirtable.filter(d => 
+                    d.dinerType === 'Master\'s Guest' && 
+                    (!currentBookingRef || !d.bookingRef || d.bookingRef !== currentBookingRef)
+                ).length;
+                
                 const totalMastersGuests = mastersGuestsInSession + mastersGuestsInAirtable;
                 
+                console.log('Limit from Events table:', limit);
                 console.log('Master\'s Guests in session:', mastersGuestsInSession);
-                console.log('Master\'s Guests in Airtable:', mastersGuestsInAirtable);
+                console.log('Master\'s Guests in Airtable (excl. current booking):', mastersGuestsInAirtable);
                 console.log('Total Master\'s Guests:', totalMastersGuests);
-                console.log('Limit:', limit);
                 console.log('Remaining:', limit - totalMastersGuests);
                 
                 if (totalMastersGuests >= limit) {
@@ -961,10 +1000,6 @@
                     document.getElementById('dinerType').value = '';
                     return;
                 }
-                
-                // Show remaining allowance
-                const remaining = limit - totalMastersGuests;
-                showSuccess(`You have ${remaining} free Master's Guest${remaining !== 1 ? 's' : ''} remaining for this meeting`);
             }
 
             // Check if Guest or Master's Guest requires a member to be registered
@@ -1031,24 +1066,8 @@
 
         function showMastersGuestAllowance() {
             console.log('=== SHOWING MASTER\'S GUEST ALLOWANCE FOR WM ===');
-            
-            const limit = currentEventData['Number of Master\'s Guests'] || 0;
-            const mastersGuestsInSession = submittedDiners.filter(d => d.dinerType === 'Master\'s Guest').length;
-            const mastersGuestsInAirtable = allDinersFromAirtable.filter(d => d.dinerType === 'Master\'s Guest').length;
-            const totalMastersGuests = mastersGuestsInSession + mastersGuestsInAirtable;
-            const remaining = limit - totalMastersGuests;
-            
-            console.log('Limit:', limit);
-            console.log('In session:', mastersGuestsInSession);
-            console.log('In Airtable:', mastersGuestsInAirtable);
-            console.log('Total:', totalMastersGuests);
-            console.log('Remaining:', remaining);
-            
-            if (remaining > 0) {
-                showSuccess(`You have ${remaining} free Master's Guest${remaining !== 1 ? 's' : ''} remaining for this meeting`);
-            } else {
-                showSuccess('All Master\'s Guest allocations have been used for this meeting');
-            }
+            // Counter is already visible, just log for debugging
+            updateMastersGuestCounter();
         }
 
         async function startNewBooking() {
@@ -1062,6 +1081,9 @@
             document.getElementById('bookingModeButtons').style.display = 'none';
             document.getElementById('eventInfoSection').style.display = 'block';
             document.getElementById('dinerFormCard').style.display = 'block';
+            
+            // Initialize Master's Guest counter
+            updateMastersGuestCounter();
             
             console.log('Starting new booking with ref:', currentBookingRef);
         }
@@ -1110,7 +1132,8 @@
                 allDinersFromAirtable = data.records.map(record => ({
                     name: record.fields['Name'],
                     dinerType: record.fields['Diner Type'],
-                    eventDate: record.fields['Event Date']
+                    eventDate: record.fields['Event Date'],
+                    bookingRef: record.fields['Booking Ref']
                 }));
                 
                 // Filter to only Members and Hicks Beach WM for the dropdown
@@ -1423,6 +1446,123 @@
             modal.classList.remove('active');
         }
 
+        function completeBooking() {
+            // Calculate and show totals in payment modal
+            const totals = calculateTotalsPerMember();
+            const payingTotals = Object.entries(totals).filter(([member, total]) => total > 0);
+            
+            let totalsHtml = '';
+            if (payingTotals.length > 0) {
+                totalsHtml = '<div style="margin: 1.5rem 0; padding: 1rem; background: var(--light-gray); border-radius: 4px;"><h4 style="margin-top: 0; color: var(--navy);">Totals to Pay:</h4><ul style="list-style: none; padding: 0;">';
+                for (const [member, total] of payingTotals) {
+                    totalsHtml += `<li style="padding: 0.25rem 0;"><strong>${member}:</strong> £${total.toFixed(2)}</li>`;
+                }
+                totalsHtml += '</ul></div>';
+            }
+            
+            const modal = document.getElementById('paymentModal');
+            const detailsContainer = document.getElementById('paymentDetails');
+            
+            const lastDayToBook = formatDate(currentEventData['Last Day To Book']);
+            
+            detailsContainer.innerHTML = `
+                <p>Thank you for registering. Please note that your booking is not secured until you have paid the required dining fees – details of how to pay are shown below.</p>
+                <p><strong>Your booking reference number is ${currentBookingRef}.</strong> Please note this number as you will need it if you want to amend your booking.</p>
+                <p>Please note the last date for amendments is <strong>${lastDayToBook}</strong>.</p>
+                ${totalsHtml}
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--light-gray); border-radius: 4px;">
+                    <h4 style="margin-top: 0; color: var(--navy);">Payment details:</h4>
+                    <p style="margin: 0.5rem 0;"><strong>By BACS (preferred)</strong><br>
+                    Account Name: Hicks Beach Lodge 2407<br>
+                    Sort code: 30-98-29<br>
+                    Account Number: 00134308</p>
+                    <p style="margin: 0.5rem 0;"><strong>Or by cheque</strong> made payable to 'Hicks Beach Lodge' to:<br>
+                    K. Couling, 2 Ashley Drive, Bussage, Stroud, Glos. GL6 8BY<br>
+                    <em>PLEASE POST IN GOOD TIME</em></p>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+
+        function confirmDeleteDiner(index) {
+            const diner = submittedDiners[index];
+            if (confirm(`Are you sure you want to delete ${diner.name} from this booking?`)) {
+                deleteDiner(index);
+            }
+        }
+
+        async function deleteDiner(index) {
+            const diner = submittedDiners[index];
+            const recordId = diner.recordId || diner.id;
+            
+            try {
+                // Delete from Airtable
+                const response = await fetch(
+                    `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}/${recordId}`,
+                    {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${AIRTABLE_CONFIG.apiKey}`
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error('Failed to delete from Airtable');
+                }
+                
+                // Remove from local array
+                submittedDiners.splice(index, 1);
+                
+                // Reload data and update display
+                await loadRegisteredDiners();
+                updateSubmittedDinersList();
+                await updateTotalsToPay();
+                updateMastersGuestCounter();
+                
+                showSuccess(`Successfully deleted ${diner.name}`);
+                
+            } catch (error) {
+                console.error('Error deleting diner:', error);
+                showError(`Failed to delete diner: ${error.message}`);
+            }
+        }
+
+        function updateMastersGuestCounter() {
+            const counter = document.getElementById('mastersGuestCounter');
+            const counterText = document.getElementById('mastersGuestCounterText');
+            
+            const limit = currentEventData['Number of Master\'s Guests'] || 0;
+            
+            // Count Master's Guests - avoid double counting by checking booking ref
+            const mastersGuestsInSession = submittedDiners.filter(d => d.dinerType === 'Master\'s Guest').length;
+            
+            // Only count Airtable diners NOT in current booking
+            const mastersGuestsInAirtable = allDinersFromAirtable.filter(d => 
+                d.dinerType === 'Master\'s Guest' && 
+                (!currentBookingRef || !d.bookingRef || d.bookingRef !== currentBookingRef)
+            ).length;
+            
+            const totalMastersGuests = mastersGuestsInSession + mastersGuestsInAirtable;
+            const remaining = limit - totalMastersGuests;
+            
+            if (limit > 0) {
+                counter.style.display = 'block';
+                counterText.textContent = `Master's Guests: ${totalMastersGuests} of ${limit} used (${remaining} remaining)`;
+                
+                if (remaining === 0) {
+                    counter.style.borderColor = '#c41e3a';
+                    counter.style.background = '#ffe6ea';
+                } else {
+                    counter.style.borderColor = 'var(--gold)';
+                    counter.style.background = 'var(--light-gray)';
+                }
+            } else {
+                counter.style.display = 'none';
+            }
+        }
+
         async function confirmAndSubmit() {
             const confirmBtn = document.getElementById('confirmSubmit');
             const cancelBtn = document.getElementById('cancelSubmit');
@@ -1547,13 +1687,6 @@
                         cost: individualCost
                     });
                     showSuccess(`Successfully registered ${pendingDiner.name}!`);
-                    
-                    // Show payment info on first diner of new booking
-                    if (submittedDiners.length === 1 && bookingMode === 'new') {
-                        setTimeout(() => {
-                            showPaymentModal();
-                        }, 500);
-                    }
                 }
                 
                 console.log('Updated submitted diners list:', submittedDiners);
@@ -1572,6 +1705,9 @@
                 
                 // Update totals in Airtable
                 await updateTotalsToPay();
+                
+                // Update Master's Guest counter
+                updateMastersGuestCounter();
                 
                 // Reset form for next entry
                 resetForm();
@@ -1609,6 +1745,7 @@
                             <th>Guest Of</th>
                             <th>Cost</th>
                             <th>Dietary Requirements</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1631,12 +1768,18 @@
                 const guestOf = diner.guestOf || '-';
 
                 tableHtml += `
-                    <tr onclick="editDiner(${index})" data-index="${index}">
+                    <tr data-index="${index}">
                         <td data-label="Name">${diner.name}</td>
                         <td data-label="Diner Type">${diner.dinerType}</td>
                         <td data-label="Guest Of">${guestOf}</td>
                         <td data-label="Cost">£${cost.toFixed(2)}</td>
                         <td data-label="Dietary">${dietaryString}</td>
+                        <td data-label="Actions">
+                            <div class="action-icons">
+                                <span class="action-icon edit-icon" onclick="editDiner(${index})" title="Edit">✏️</span>
+                                <span class="action-icon delete-icon" onclick="confirmDeleteDiner(${index})" title="Delete">🗑️</span>
+                            </div>
+                        </td>
                     </tr>
                 `;
             });
