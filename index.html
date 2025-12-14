@@ -991,6 +991,7 @@
 
         async function loadRegisteredDiners() {
             if (!currentEventData || !currentEventData['Event Date']) {
+                console.warn('Cannot load diners - no event data or date');
                 return;
             }
 
@@ -999,7 +1000,10 @@
                 const eventDate = currentEventData['Event Date'];
                 const formula = encodeURIComponent(`{Event Date} = '${eventDate}'`);
                 
-                console.log('Loading all diners for event date:', eventDate);
+                console.log('=== LOADING REGISTERED DINERS ===');
+                console.log('Event date:', eventDate);
+                console.log('Formula:', decodeURIComponent(formula));
+                console.log('Full URL:', `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula=${formula}`);
                 
                 const response = await fetch(
                     `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula=${formula}`,
@@ -1010,17 +1014,24 @@
                     }
                 );
 
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+
                 if (!response.ok) {
-                    console.error('Failed to load registered diners');
+                    const errorText = await response.text();
+                    console.error('Failed to load registered diners. Error:', errorText);
                     return;
                 }
 
                 const data = await response.json();
+                console.log('Raw Airtable response:', data);
+                console.log('Number of records returned:', data.records.length);
                 
                 // Store ALL diners for validation
                 allDinersFromAirtable = data.records.map(record => ({
                     name: record.fields['Name'],
-                    dinerType: record.fields['Diner Type']
+                    dinerType: record.fields['Diner Type'],
+                    eventDate: record.fields['Event Date']
                 }));
                 
                 // Filter to only Members and Hicks Beach WM for the dropdown
@@ -1028,15 +1039,20 @@
                     d.dinerType === 'Member' || d.dinerType === 'Hicks Beach WM'
                 );
 
-                console.log('Loaded ALL diners from Airtable:', allDinersFromAirtable);
-                console.log('Filtered to Members/WM:', registeredMembersFromAirtable);
+                console.log('✓ Loaded ALL diners from Airtable:', allDinersFromAirtable);
+                console.log('✓ Filtered to Members/WM for dropdown:', registeredMembersFromAirtable);
                 
                 // Check for existing WM using ALL diners
                 const hasWM = allDinersFromAirtable.some(d => d.dinerType === 'Hicks Beach WM');
                 console.log('WM found in Airtable?', hasWM);
+                if (hasWM) {
+                    const wmRecord = allDinersFromAirtable.find(d => d.dinerType === 'Hicks Beach WM');
+                    console.log('WM record:', wmRecord);
+                }
 
             } catch (error) {
-                console.error('Error loading registered diners:', error);
+                console.error('=== ERROR LOADING DINERS ===');
+                console.error('Error:', error);
             }
         }
 
