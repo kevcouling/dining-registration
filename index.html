@@ -733,7 +733,7 @@
 
     <script>
         // App Version
-        const APP_VERSION = 'Phase 5 - v5.0 - Complete';
+        const APP_VERSION = 'Phase 5 - v5.1 - Debug Master\'s Guest Limits';
         console.log('========================================');
         console.log('DINING REGISTRATION APP');
         console.log('Version:', APP_VERSION);
@@ -939,13 +939,21 @@
             
             // Check Master's Guest limit
             if (dinerType === 'Master\'s Guest') {
+                console.log('=== CHECKING MASTER\'S GUEST LIMIT ===');
+                
                 const limit = currentEventData['Number of Master\'s Guests'] || 0;
+                console.log('Limit from Events table:', limit);
+                console.log('All diners in session:', submittedDiners);
+                console.log('All diners from Airtable:', allDinersFromAirtable);
+                
                 const mastersGuestsInSession = submittedDiners.filter(d => d.dinerType === 'Master\'s Guest').length;
                 const mastersGuestsInAirtable = allDinersFromAirtable.filter(d => d.dinerType === 'Master\'s Guest').length;
                 const totalMastersGuests = mastersGuestsInSession + mastersGuestsInAirtable;
                 
-                console.log('Master\'s Guest limit:', limit);
-                console.log('Already registered:', totalMastersGuests);
+                console.log('Master\'s Guests in session:', mastersGuestsInSession);
+                console.log('Master\'s Guests in Airtable:', mastersGuestsInAirtable);
+                console.log('Total Master\'s Guests:', totalMastersGuests);
+                console.log('Limit:', limit);
                 console.log('Remaining:', limit - totalMastersGuests);
                 
                 if (totalMastersGuests >= limit) {
@@ -1022,11 +1030,19 @@
         }
 
         function showMastersGuestAllowance() {
+            console.log('=== SHOWING MASTER\'S GUEST ALLOWANCE FOR WM ===');
+            
             const limit = currentEventData['Number of Master\'s Guests'] || 0;
             const mastersGuestsInSession = submittedDiners.filter(d => d.dinerType === 'Master\'s Guest').length;
             const mastersGuestsInAirtable = allDinersFromAirtable.filter(d => d.dinerType === 'Master\'s Guest').length;
             const totalMastersGuests = mastersGuestsInSession + mastersGuestsInAirtable;
             const remaining = limit - totalMastersGuests;
+            
+            console.log('Limit:', limit);
+            console.log('In session:', mastersGuestsInSession);
+            console.log('In Airtable:', mastersGuestsInAirtable);
+            console.log('Total:', totalMastersGuests);
+            console.log('Remaining:', remaining);
             
             if (remaining > 0) {
                 showSuccess(`You have ${remaining} free Master's Guest${remaining !== 1 ? 's' : ''} remaining for this meeting`);
