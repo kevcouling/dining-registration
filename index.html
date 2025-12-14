@@ -734,7 +734,8 @@
         let isLoading = false;
         let bookingMode = null; // 'new' or 'amend'
         let currentBookingRef = null;
-        let registeredMembersFromAirtable = []; // Members already in Airtable for this event
+        let registeredMembersFromAirtable = []; // Only Members/WM from Airtable (for Guest Of dropdown)
+        let allDinersFromAirtable = []; // ALL diners from Airtable (for validation checks)
         let editingDinerIndex = null; // Index of diner being edited, null if adding new
 
         // Initialize
@@ -895,10 +896,10 @@
             if (dinerType === 'Hicks Beach WM') {
                 console.log('=== CHECKING HICKS BEACH WM ===');
                 console.log('Submitted diners:', submittedDiners);
-                console.log('Registered from Airtable:', registeredMembersFromAirtable);
+                console.log('ALL diners from Airtable:', allDinersFromAirtable);
                 
                 const wmInSession = submittedDiners.some(d => d.dinerType === 'Hicks Beach WM');
-                const wmInAirtable = registeredMembersFromAirtable.some(d => d.dinerType === 'Hicks Beach WM');
+                const wmInAirtable = allDinersFromAirtable.some(d => d.dinerType === 'Hicks Beach WM');
                 
                 console.log('WM in session?', wmInSession);
                 console.log('WM in Airtable?', wmInAirtable);
@@ -977,8 +978,8 @@
             bookingMode = 'new';
             currentBookingRef = generateBookingRef();
             
-            // Load registered members from Airtable for this event
-            await loadRegisteredMembers();
+            // Load registered diners from Airtable for this event
+            await loadRegisteredDiners();
             
             // Hide mode selection, show event info and form
             document.getElementById('bookingModeButtons').style.display = 'none';
@@ -988,17 +989,17 @@
             console.log('Starting new booking with ref:', currentBookingRef);
         }
 
-        async function loadRegisteredMembers() {
+        async function loadRegisteredDiners() {
             if (!currentEventData || !currentEventData['Event Date']) {
                 return;
             }
 
             try {
-                // Get all diners for this event date who are Members or Hicks Beach WM
+                // Get ALL diners for this event date
                 const eventDate = currentEventData['Event Date'];
-                const formula = encodeURIComponent(
-                    `AND({Event Date} = '${eventDate}', OR({Diner Type} = 'Member', {Diner Type} = 'Hicks Beach WM'))`
-                );
+                const formula = encodeURIComponent(`{Event Date} = '${eventDate}'`);
+                
+                console.log('Loading all diners for event date:', eventDate);
                 
                 const response = await fetch(
                     `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula=${formula}`,
@@ -1010,20 +1011,32 @@
                 );
 
                 if (!response.ok) {
-                    console.error('Failed to load registered members');
+                    console.error('Failed to load registered diners');
                     return;
                 }
 
                 const data = await response.json();
-                registeredMembersFromAirtable = data.records.map(record => ({
+                
+                // Store ALL diners for validation
+                allDinersFromAirtable = data.records.map(record => ({
                     name: record.fields['Name'],
                     dinerType: record.fields['Diner Type']
                 }));
+                
+                // Filter to only Members and Hicks Beach WM for the dropdown
+                registeredMembersFromAirtable = allDinersFromAirtable.filter(d => 
+                    d.dinerType === 'Member' || d.dinerType === 'Hicks Beach WM'
+                );
 
-                console.log('Loaded registered members from Airtable:', registeredMembersFromAirtable);
+                console.log('Loaded ALL diners from Airtable:', allDinersFromAirtable);
+                console.log('Filtered to Members/WM:', registeredMembersFromAirtable);
+                
+                // Check for existing WM using ALL diners
+                const hasWM = allDinersFromAirtable.some(d => d.dinerType === 'Hicks Beach WM');
+                console.log('WM found in Airtable?', hasWM);
 
             } catch (error) {
-                console.error('Error loading registered members:', error);
+                console.error('Error loading registered diners:', error);
             }
         }
 
@@ -1362,8 +1375,8 @@
                 // Close modal first
                 closeModal();
                 
-                // Reload registered members from Airtable
-                await loadRegisteredMembers();
+                // Reload registered diners from Airtable
+                await loadRegisteredDiners();
                 
                 // Then update the display
                 updateSubmittedDinersList();
