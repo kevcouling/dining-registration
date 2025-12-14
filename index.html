@@ -720,7 +720,7 @@
 
     <script>
         // App Version
-        const APP_VERSION = 'Phase 4 - v4.5 - 2024-12-14 15:30';
+        const APP_VERSION = 'Phase 4 - v4.6 - Date Query Fix';
         console.log('========================================');
         console.log('DINING REGISTRATION APP');
         console.log('Version:', APP_VERSION);
@@ -1005,10 +1005,20 @@
             try {
                 // Get ALL diners for this event date
                 const eventDate = currentEventData['Event Date'];
-                const formula = encodeURIComponent(`{Event Date} = '${eventDate}'`);
+                
+                // Convert ISO date to European format DD/MM/YYYY for Airtable formula
+                const date = new Date(eventDate);
+                const day = date.getDate();
+                const month = date.getMonth() + 1;
+                const year = date.getFullYear();
+                const europeanDate = `${day}/${month}/${year}`;
+                
+                // Use DATESTR to compare dates properly in Airtable
+                const formula = encodeURIComponent(`DATESTR({Event Date}) = '${europeanDate}'`);
                 
                 console.log('=== LOADING REGISTERED DINERS ===');
-                console.log('Event date:', eventDate);
+                console.log('Event date (ISO):', eventDate);
+                console.log('Event date (European):', europeanDate);
                 console.log('Formula:', decodeURIComponent(formula));
                 console.log('Full URL:', `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula=${formula}`);
                 
