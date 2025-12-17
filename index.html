@@ -767,7 +767,7 @@
 
     <script>
         // App Version
-        const APP_VERSION = 'Phase 5 - v5.3 - Final Polish';
+        const APP_VERSION = 'Phase 5 - v5.4 - Counter Fix';
         console.log('========================================');
         console.log('DINING REGISTRATION APP');
         console.log('Version:', APP_VERSION);
@@ -1534,6 +1534,9 @@
             
             const limit = currentEventData['Number of Master\'s Guests'] || 0;
             
+            // Only show counter if there's a WM in the current booking OR if user is selecting Master's Guest
+            const hasWMInBooking = submittedDiners.some(d => d.dinerType === 'Hicks Beach WM');
+            
             // Count Master's Guests - avoid double counting by checking booking ref
             const mastersGuestsInSession = submittedDiners.filter(d => d.dinerType === 'Master\'s Guest').length;
             
@@ -1546,8 +1549,8 @@
             const totalMastersGuests = mastersGuestsInSession + mastersGuestsInAirtable;
             const remaining = limit - totalMastersGuests;
             
-            // Only show if limit > 0 AND there are registered diners (not on initial load)
-            if (limit > 0 && (submittedDiners.length > 0 || totalMastersGuests > 0)) {
+            // Only show if: limit exists AND (WM in booking OR Master's Guests exist in booking)
+            if (limit > 0 && (hasWMInBooking || mastersGuestsInSession > 0)) {
                 counter.style.display = 'block';
                 counterText.textContent = `Master's Guests: ${totalMastersGuests} of ${limit} used (${remaining} remaining)`;
                 
