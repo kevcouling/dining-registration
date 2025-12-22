@@ -513,11 +513,11 @@
             selectedEvent = events.find(e => e.id === eventId);
             
             try {
-                // Convert date to DD/MM/YY format to match Airtable
+                // Convert date to DD/MM/YYYY format to match Airtable
                 const date = new Date(selectedEvent.date);
                 const day = String(date.getDate()).padStart(2, '0');
                 const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = String(date.getFullYear()).slice(-2);
+                const year = String(date.getFullYear());
                 const eventDateFormatted = `${day}/${month}/${year}`;
                 
                 console.log('Filtering for Event Date:', eventDateFormatted);
