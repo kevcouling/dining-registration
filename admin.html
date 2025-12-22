@@ -513,11 +513,18 @@
             selectedEvent = events.find(e => e.id === eventId);
             
             try {
-                const eventDate = selectedEvent.date;
+                // Convert date to DD/MM/YY format to match Airtable
+                const date = new Date(selectedEvent.date);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = String(date.getFullYear()).slice(-2);
+                const eventDateFormatted = `${day}/${month}/${year}`;
+                
+                console.log('Filtering for Event Date:', eventDateFormatted);
                 
                 // Fetch all diners for this event
                 const response = await fetch(
-                    `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula={Event Date}='${eventDate}'`,
+                    `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula={Event Date}='${eventDateFormatted}'`,
                     {
                         headers: {
                             'Authorization': `Bearer ${AIRTABLE_CONFIG.apiToken}`
