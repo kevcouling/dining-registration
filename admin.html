@@ -451,7 +451,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('========================================');
             console.log('TABLE PLANNING ADMIN');
-            console.log('Version: v1.4 - 2024-12-22 - Debug Event Date Format');
+            console.log('Version: v1.5 - 2024-12-22 - ISO Date Fix');
             console.log('========================================');
             loadEvents();
         });
@@ -525,28 +525,15 @@
                 const europeanDate = `${day}/${month}/${year}`;
                 
                 console.log('Event date from Airtable:', selectedEvent.date);
-                console.log('European format for filtering:', europeanDate);
                 
-                // TEMPORARY DEBUG: Fetch ALL diners to see what Event Date values look like
-                console.log('=== DEBUG: Fetching ALL diners to inspect Event Date format ===');
-                const debugResponse = await fetch(
-                    `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?maxRecords=5`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${AIRTABLE_CONFIG.apiToken}`
-                        }
-                    }
-                );
-                const debugData = await debugResponse.json();
-                console.log('Sample diner records:', debugData.records);
-                if (debugData.records.length > 0) {
-                    console.log('First diner Event Date field:', debugData.records[0].fields['Event Date']);
-                    console.log('Type:', typeof debugData.records[0].fields['Event Date']);
-                }
-                console.log('=== END DEBUG ===');
+                // Convert to ISO format (YYYY-MM-DD) since that's what Airtable stores
+                const date = new Date(selectedEvent.date);
+                const isoDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
                 
-                // Use DATESTR to compare dates properly in Airtable (same as dining registration app)
-                const formula = `DATESTR({Event Date}) = '${europeanDate}'`;
+                console.log('ISO format for filtering:', isoDate);
+                
+                // Match directly with ISO format (no DATESTR needed since it's already a string)
+                const formula = `{Event Date} = '${isoDate}'`;
                 
                 console.log('Filter formula:', formula);
                 
