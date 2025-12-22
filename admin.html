@@ -451,7 +451,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('========================================');
             console.log('TABLE PLANNING ADMIN');
-            console.log('Version: v1.5 - 2024-12-22 - ISO Date Fix');
+            console.log('Version: v1.6 - 2024-12-22 - ISO Date Fix (Clean)');
             console.log('========================================');
             loadEvents();
         });
@@ -517,13 +517,6 @@
             selectedEvent = events.find(e => e.id === eventId);
             
             try {
-                // Convert to European format D/M/YYYY (no leading zeros)
-                const date = new Date(selectedEvent.date);
-                const day = date.getDate();
-                const month = date.getMonth() + 1;
-                const year = date.getFullYear();
-                const europeanDate = `${day}/${month}/${year}`;
-                
                 console.log('Event date from Airtable:', selectedEvent.date);
                 
                 // Convert to ISO format (YYYY-MM-DD) since that's what Airtable stores
