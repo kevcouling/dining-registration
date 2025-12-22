@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Table Planning | Hicks Beach Lodge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a4d7d 0%, #2c5f8d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a4d7d 0%, #2c5f8d 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .logo-placeholder {
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 8px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            color: #1a4d7d;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #1a4d7d;
+        }
+
+        .btn {
+            background: #1a4d7d;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: #2c5f8d;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #1a4d7d;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px;
+            border: 1px solid #dee2e6;
+        }
+
+        td {
+            padding: 10px 12px;
+            border: 1px solid #dee2e6;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        td input[type="number"] {
+            max-width: 80px;
+            padding: 6px;
+        }
+
+        .table-layout-area {
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            min-height: 600px;
+            position: relative;
+        }
+
+        .round-table {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid #1a4d7d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: move;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .round-table:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+
+        .round-table.dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+        }
+
+        .table-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a4d7d;
+        }
+
+        .table-diners {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .diner-position {
+            position: absolute;
+            background: white;
+            border: 2px solid #1a4d7d;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 11px;
+            text-align: center;
+            min-width: 80px;
+            cursor: move;
+            pointer-events: all;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .diner-position:hover {
+            background: #f0f7ff;
+            z-index: 10;
+        }
+
+        .diner-name {
+            font-weight: 600;
+            color: #1a4d7d;
+            margin-bottom: 4px;
+        }
+
+        .diner-dietary {
+            font-size: 9px;
+            color: #666;
+            line-height: 1.2;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .warning-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .warning-modal.active {
+            display: flex;
+        }
+
+        .warning-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .warning-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .warning-message {
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .warning-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+
+            .header {
+                background: white;
+                color: #1a4d7d;
+                border-bottom: 2px solid #1a4d7d;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .drag-over {
+            background: #e3f2fd !important;
+            border-color: #2196F3 !important;
+        }
+
+        .table-settings {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .settings-row {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .settings-row .form-group {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-placeholder">LOGO</div>
+            <h1>Table Planning Administration</h1>
+            <p class="subtitle">Hicks Beach Lodge - Dining Event Management</p>
+        </div>
+
+        <div class="content">
+            <!-- Event Selection -->
+            <div class="section no-print">
+                <h2 class="section-title">Select Event</h2>
+                <div class="form-group">
+                    <label for="eventSelect">Choose Event by Date:</label>
+                    <select id="eventSelect" onchange="loadEventDiners()">
+                        <option value="">Loading events...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table Type & Settings -->
+            <div id="tableSettings" class="section no-print hidden">
+                <h2 class="section-title">Table Configuration</h2>
+                <div class="table-settings">
+                    <div class="settings-row">
+                        <div class="form-group">
+                            <label for="tableType">Table Type:</label>
+                            <select id="tableType" onchange="handleTableTypeChange()">
+                                <option value="round">Round Tables</option>
+                                <option value="long" disabled>Long Tables (Coming Soon)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dinersPerTable">Diners Per Table:</label>
+                            <input type="number" id="dinersPerTable" min="4" max="20" value="10" onchange="calculateMinimumTables()">
+                        </div>
+                        <div class="form-group">
+                            <label for="numberOfTables">Number of Tables:</label>
+                            <input type="number" id="numberOfTables" min="1" max="50" value="1" onchange="generateTables()">
+                        </div>
+                        <div class="form-group">
+                            <button class="btn" onclick="autoAllocateDiners()">Auto-Allocate All Diners</button>
+                        </div>
+                    </div>
+                    <div id="minimumTablesInfo" style="margin-top: 15px; color: #666; font-size: 14px;"></div>
+                </div>
+            </div>
+
+            <!-- Diners Table -->
+            <div id="dinersSection" class="section hidden">
+                <h2 class="section-title">Registered Diners</h2>
+                <div class="controls no-print">
+                    <button class="btn" onclick="printDataTable()">🖨️ Print Diners Table</button>
+                </div>
+                <div id="dinersTableContainer"></div>
+            </div>
+
+            <!-- Visual Table Layout -->
+            <div id="tableLayoutSection" class="section hidden">
+                <h2 class="section-title">Visual Table Plan</h2>
+                <div class="controls no-print">
+                    <button class="btn" onclick="printVisualLayout()">🖨️ Print Table Plan</button>
+                    <button class="btn btn-secondary" onclick="resetTablePositions()">Reset Table Positions</button>
+                </div>
+                <div id="tableLayoutArea" class="table-layout-area"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning Modal -->
+    <div id="warningModal" class="warning-modal">
+        <div class="warning-content">
+            <div class="warning-icon">⚠️</div>
+            <div class="warning-message" id="warningMessage"></div>
+            <div class="warning-buttons">
+                <button class="btn" onclick="closeWarning()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const AIRTABLE_CONFIG = {
+            baseId: 'appt2FP55Rbj2wCux',
+            apiToken: 'patlpSPboR2VXuX4s.2356c73072130e640a12b23cf4ba27ef000afd84f615c6ec5d8d012c82d2bd27',
+            eventsTable: 'Events',
+            dinersTable: 'Diners'
+        };
+
+        // State
+        let events = [];
+        let selectedEvent = null;
+        let diners = [];
+        let tableAllocations = {}; // tableNumber -> array of diner objects
+        let tablePositions = {}; // tableNumber -> {x, y}
+        let draggedElement = null;
+        let draggedDiner = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEvents();
+        });
+
+        // Load all events from Airtable
+        async function loadEvents() {
+            try {
+                const response = await fetch(
+                    `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.eventsTable}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${AIRTABLE_CONFIG.apiToken}`
+                        }
+                    }
+                );
+
+                const data = await response.json();
+                events = data.records.map(record => ({
+                    id: record.id,
+                    name: record.fields['Event Name'],
+                    date: record.fields['Event Date'],
+                    menuText: record.fields['Menu Text'],
+                    costPerMeal: record.fields['Cost Per Meal'],
+                    lastDayToBook: record.fields['Last Day To Book']
+                }));
+
+                // Sort by date (most recent first)
+                events.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                populateEventDropdown();
+            } catch (error) {
+                console.error('Error loading events:', error);
+                document.getElementById('eventSelect').innerHTML = '<option value="">Error loading events</option>';
+            }
+        }
+
+        function populateEventDropdown() {
+            const select = document.getElementById('eventSelect');
+            select.innerHTML = '<option value="">Select an event...</option>';
+            
+            events.forEach(event => {
+                const option = document.createElement('option');
+                option.value = event.id;
+                const dateFormatted = new Date(event.date).toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                option.textContent = `${dateFormatted} - ${event.name}`;
+                select.appendChild(option);
+            });
+        }
+
+        // Load diners for selected event
+        async function loadEventDiners() {
+            const eventId = document.getElementById('eventSelect').value;
+            if (!eventId) {
+                hideAllSections();
+                return;
+            }
+
+            selectedEvent = events.find(e => e.id === eventId);
+            
+            try {
+                const eventDate = selectedEvent.date;
+                
+                // Fetch all diners for this event
+                const response = await fetch(
+                    `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula={Event Date}='${eventDate}'`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${AIRTABLE_CONFIG.apiToken}`
+                        }
+                    }
+                );
+
+                const data = await response.json();
+                diners = data.records.map(record => ({
+                    id: record.id,
+                    name: record.fields['Name'],
+                    rank: record.fields['Grand or Provincial Rank'] || '',
+                    dinerType: record.fields['Diner Type'],
+                    guestOf: record.fields['Guest Of'] || '',
+                    dietary: getDietaryString(record.fields),
+                    specialRequests: record.fields['Special requests'] || '',
+                    tableNumber: record.fields['Table Number'] || null
+                }));
+
+                renderDinersTable();
+                showAllSections();
+                calculateMinimumTables();
+            } catch (error) {
+                console.error('Error loading diners:', error);
+                alert('Error loading diners. Please try again.');
+            }
+        }
+
+        function getDietaryString(fields) {
+            const dietary = [];
+            if (fields['Vegetarian']) dietary.push('Vegetarian');
+            if (fields['Vegan']) dietary.push('Vegan');
+            if (fields['Pescatarian']) dietary.push('Pescatarian');
+            if (fields['Gluten']) dietary.push('Gluten-free');
+            if (fields['Lactose']) dietary.push('Lactose-free');
+            if (fields['Shellfish']) dietary.push('No Shellfish');
+            if (fields['Fish']) dietary.push('No Fish');
+            if (fields['Nuts']) dietary.push('No Nuts');
+            if (fields['Other'] && fields['Other - Description']) {
+                dietary.push(fields['Other - Description']);
+            }
+            return dietary.join(', ') || 'None';
+        }
+
+        function renderDinersTable() {
+            const container = document.getElementById('dinersTableContainer');
+            
+            let html = '<table id="dinersDataTable">';
+            html += '<thead><tr>';
+            html += '<th>Name</th>';
+            html += '<th>Rank</th>';
+            html += '<th>Diner Type</th>';
+            html += '<th>Guest Of</th>';
+            html += '<th>Dietary Requirements</th>';
+            html += '<th>Special Requests</th>';
+            html += '<th class="no-print">Table Number</th>';
+            html += '</tr></thead><tbody>';
+
+            diners.forEach((diner, index) => {
+                html += '<tr>';
+                html += `<td>${diner.name}</td>`;
+                html += `<td>${diner.rank}</td>`;
+                html += `<td>${diner.dinerType}</td>`;
+                html += `<td>${diner.guestOf}</td>`;
+                html += `<td>${diner.dietary}</td>`;
+                html += `<td>${diner.specialRequests}</td>`;
+                html += `<td class="no-print"><input type="number" min="1" value="${diner.tableNumber || ''}" 
+                    onchange="updateDinerTable(${index}, this.value)" placeholder="-"></td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function updateDinerTable(index, tableNum) {
+            const tableNumber = parseInt(tableNum) || null;
+            diners[index].tableNumber = tableNumber;
+            
+            // Update table allocations
+            rebuildTableAllocations();
+            renderTableLayout();
+        }
+
+        function rebuildTableAllocations() {
+            tableAllocations = {};
+            diners.forEach(diner => {
+                if (diner.tableNumber) {
+                    if (!tableAllocations[diner.tableNumber]) {
+                        tableAllocations[diner.tableNumber] = [];
+                    }
+                    tableAllocations[diner.tableNumber].push(diner);
+                }
+            });
+        }
+
+        function calculateMinimumTables() {
+            const dinersPerTable = parseInt(document.getElementById('dinersPerTable').value) || 10;
+            const totalDiners = diners.length;
+            const minimumTables = Math.ceil(totalDiners / dinersPerTable);
+            
+            document.getElementById('minimumTablesInfo').textContent = 
+                `Total diners: ${totalDiners} | Suggested minimum tables: ${minimumTables} (at ${dinersPerTable} per table)`;
+            
+            // Update number of tables if less than minimum
+            const currentTables = parseInt(document.getElementById('numberOfTables').value) || 1;
+            if (currentTables < minimumTables) {
+                document.getElementById('numberOfTables').value = minimumTables;
+            }
+        }
+
+        function generateTables() {
+            const numberOfTables = parseInt(document.getElementById('numberOfTables').value) || 1;
+            renderTableLayout();
+        }
+
+        function renderTableLayout() {
+            const container = document.getElementById('tableLayoutArea');
+            const numberOfTables = parseInt(document.getElementById('numberOfTables').value) || 1;
+            
+            container.innerHTML = '';
+            
+            // Create tables
+            for (let i = 1; i <= numberOfTables; i++) {
+                const table = document.createElement('div');
+                table.className = 'round-table';
+                table.id = `table-${i}`;
+                table.setAttribute('data-table-number', i);
+                
+                // Set position (use saved position or calculate default)
+                if (!tablePositions[i]) {
+                    const cols = Math.ceil(Math.sqrt(numberOfTables));
+                    const row = Math.floor((i - 1) / cols);
+                    const col = (i - 1) % cols;
+                    tablePositions[i] = {
+                        x: 50 + (col * 250),
+                        y: 50 + (row * 250)
+                    };
+                }
+                
+                table.style.left = tablePositions[i].x + 'px';
+                table.style.top = tablePositions[i].y + 'px';
+                
+                // Table number in center
+                const tableNumber = document.createElement('div');
+                tableNumber.className = 'table-number';
+                tableNumber.textContent = i;
+                table.appendChild(tableNumber);
+                
+                // Diners container
+                const dinersContainer = document.createElement('div');
+                dinersContainer.className = 'table-diners';
+                table.appendChild(dinersContainer);
+                
+                // Add diners to this table
+                const tableDiners = tableAllocations[i] || [];
+                tableDiners.forEach((diner, idx) => {
+                    const dinerEl = createDinerElement(diner, idx, tableDiners.length);
+                    dinersContainer.appendChild(dinerEl);
+                });
+                
+                // Make table draggable
+                makeTableDraggable(table);
+                
+                // Make table a drop zone
+                makeDropZone(table);
+                
+                container.appendChild(table);
+            }
+        }
+
+        function createDinerElement(diner, index, total) {
+            const el = document.createElement('div');
+            el.className = 'diner-position';
+            el.setAttribute('draggable', 'true');
+            el.setAttribute('data-diner-id', diner.id);
+            
+            // Position around the circle
+            const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
+            const radius = 110;
+            const x = 50 + Math.cos(angle) * radius;
+            const y = 50 + Math.sin(angle) * radius;
+            
+            el.style.left = `calc(${x}% - 40px)`;
+            el.style.top = `calc(${y}% - 20px)`;
+            
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'diner-name';
+            nameDiv.textContent = diner.name;
+            el.appendChild(nameDiv);
+            
+            if (diner.dietary && diner.dietary !== 'None') {
+                const dietaryDiv = document.createElement('div');
+                dietaryDiv.className = 'diner-dietary';
+                dietaryDiv.textContent = diner.dietary;
+                el.appendChild(dietaryDiv);
+            }
+            
+            // Drag events
+            el.addEventListener('dragstart', (e) => {
+                draggedDiner = diner;
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            
+            el.addEventListener('dragend', () => {
+                draggedDiner = null;
+            });
+            
+            return el;
+        }
+
+        function makeTableDraggable(table) {
+            let isDragging = false;
+            let startX, startY, initialX, initialY;
+            
+            table.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('diner-position')) return;
+                
+                isDragging = true;
+                table.classList.add('dragging');
+                
+                startX = e.clientX;
+                startY = e.clientY;
+                initialX = table.offsetLeft;
+                initialY = table.offsetTop;
+                
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                
+                table.style.left = (initialX + dx) + 'px';
+                table.style.top = (initialY + dy) + 'px';
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    table.classList.remove('dragging');
+                    
+                    // Save position
+                    const tableNum = parseInt(table.getAttribute('data-table-number'));
+                    tablePositions[tableNum] = {
+                        x: table.offsetLeft,
+                        y: table.offsetTop
+                    };
+                }
+            });
+        }
+
+        function makeDropZone(table) {
+            table.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                table.classList.add('drag-over');
+            });
+            
+            table.addEventListener('dragleave', () => {
+                table.classList.remove('drag-over');
+            });
+            
+            table.addEventListener('drop', (e) => {
+                e.preventDefault();
+                table.classList.remove('drag-over');
+                
+                if (!draggedDiner) return;
+                
+                const tableNum = parseInt(table.getAttribute('data-table-number'));
+                assignDinerToTable(draggedDiner, tableNum);
+            });
+        }
+
+        function assignDinerToTable(diner, tableNumber) {
+            // Find diner in array and update
+            const dinerIndex = diners.findIndex(d => d.id === diner.id);
+            if (dinerIndex !== -1) {
+                diners[dinerIndex].tableNumber = tableNumber;
+                
+                // If this is a member/WM, also move their guests
+                if (diner.dinerType === 'Member' || diner.dinerType === 'Hicks Beach WM') {
+                    diners.forEach((d, idx) => {
+                        if (d.guestOf === diner.name) {
+                            diners[idx].tableNumber = tableNumber;
+                        }
+                    });
+                }
+                
+                rebuildTableAllocations();
+                renderDinersTable();
+                renderTableLayout();
+            }
+        }
+
+        function autoAllocateDiners() {
+            // Reset all allocations
+            diners.forEach(d => d.tableNumber = null);
+            tableAllocations = {};
+            
+            const dinersPerTable = parseInt(document.getElementById('dinersPerTable').value) || 10;
+            
+            // Step 1: Allocate WM and Master's Guests to Table 1
+            const wm = diners.find(d => d.dinerType === 'Hicks Beach WM');
+            const mastersGuests = diners.filter(d => d.dinerType === "Master's Guest");
+            
+            let table1Count = 0;
+            if (wm) {
+                wm.tableNumber = 1;
+                table1Count++;
+            }
+            
+            mastersGuests.forEach(guest => {
+                guest.tableNumber = 1;
+                table1Count++;
+            });
+            
+            // Check if Table 1 exceeds capacity
+            if (table1Count > dinersPerTable) {
+                const overflow = table1Count - dinersPerTable;
+                showWarning(`Table 1 has ${table1Count} diners (${overflow} over the ${dinersPerTable} suggested capacity). 
+                    ${overflow} Master's Guest(s) have been moved to Table 2. You can drag them back if needed.`);
+                
+                // Move overflow to Table 2
+                let moved = 0;
+                for (let i = mastersGuests.length - 1; i >= 0 && moved < overflow; i--) {
+                    mastersGuests[i].tableNumber = 2;
+                    moved++;
+                }
+            }
+            
+            // Step 2: Allocate remaining diners
+            const unallocated = diners.filter(d => !d.tableNumber);
+            let currentTable = 2;
+            let currentTableCount = tableAllocations[2] ? tableAllocations[2].length : 0;
+            
+            unallocated.forEach(diner => {
+                if (currentTableCount >= dinersPerTable) {
+                    currentTable++;
+                    currentTableCount = 0;
+                }
+                
+                diner.tableNumber = currentTable;
+                currentTableCount++;
+                
+                // If this is a member/WM, allocate their guests to same table
+                if (diner.dinerType === 'Member' || diner.dinerType === 'Hicks Beach WM') {
+                    const guests = diners.filter(d => d.guestOf === diner.name && !d.tableNumber);
+                    guests.forEach(guest => {
+                        if (currentTableCount >= dinersPerTable) {
+                            currentTable++;
+                            currentTableCount = 0;
+                        }
+                        guest.tableNumber = currentTable;
+                        currentTableCount++;
+                    });
+                }
+            });
+            
+            // Update number of tables if needed
+            const maxTable = Math.max(...diners.map(d => d.tableNumber || 0));
+            if (maxTable > parseInt(document.getElementById('numberOfTables').value)) {
+                document.getElementById('numberOfTables').value = maxTable;
+            }
+            
+            rebuildTableAllocations();
+            renderDinersTable();
+            generateTables();
+        }
+
+        function resetTablePositions() {
+            tablePositions = {};
+            renderTableLayout();
+        }
+
+        function handleTableTypeChange() {
+            const tableType = document.getElementById('tableType').value;
+            if (tableType === 'long') {
+                alert('Long table functionality coming soon!');
+                document.getElementById('tableType').value = 'round';
+            }
+        }
+
+        function showWarning(message) {
+            document.getElementById('warningMessage').textContent = message;
+            document.getElementById('warningModal').classList.add('active');
+        }
+
+        function closeWarning() {
+            document.getElementById('warningModal').classList.remove('active');
+        }
+
+        function hideAllSections() {
+            document.getElementById('tableSettings').classList.add('hidden');
+            document.getElementById('dinersSection').classList.add('hidden');
+            document.getElementById('tableLayoutSection').classList.add('hidden');
+        }
+
+        function showAllSections() {
+            document.getElementById('tableSettings').classList.remove('hidden');
+            document.getElementById('dinersSection').classList.remove('hidden');
+            document.getElementById('tableLayoutSection').classList.remove('hidden');
+        }
+
+        function printDataTable() {
+            // Hide everything except diners table
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(s => {
+                if (s.id !== 'dinersSection') {
+                    s.style.display = 'none';
+                }
+            });
+            
+            window.print();
+            
+            // Restore
+            sections.forEach(s => s.style.display = '');
+        }
+
+        function printVisualLayout() {
+            // Hide everything except table layout
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(s => {
+                if (s.id !== 'tableLayoutSection') {
+                    s.style.display = 'none';
+                }
+            });
+            
+            window.print();
+            
+            // Restore
+            sections.forEach(s => s.style.display = '');
+        }
+    </script>
+</body>
+</html>
