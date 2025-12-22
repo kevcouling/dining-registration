@@ -451,7 +451,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('========================================');
             console.log('TABLE PLANNING ADMIN');
-            console.log('Version: v1.6 - 2024-12-22 - ISO Date Fix (Clean)');
+            console.log('Version: v1.7 - 2024-12-22 - IS_SAME Date Function');
             console.log('========================================');
             loadEvents();
         });
@@ -519,14 +519,9 @@
             try {
                 console.log('Event date from Airtable:', selectedEvent.date);
                 
-                // Convert to ISO format (YYYY-MM-DD) since that's what Airtable stores
-                const date = new Date(selectedEvent.date);
-                const isoDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
-                
-                console.log('ISO format for filtering:', isoDate);
-                
-                // Match directly with ISO format (no DATESTR needed since it's already a string)
-                const formula = `{Event Date} = '${isoDate}'`;
+                // Use IS_SAME to compare dates properly in Airtable
+                const isoDate = selectedEvent.date; // Already in YYYY-MM-DD format
+                const formula = `IS_SAME({Event Date}, '${isoDate}', 'day')`;
                 
                 console.log('Filter formula:', formula);
                 
