@@ -513,17 +513,23 @@
             selectedEvent = events.find(e => e.id === eventId);
             
             try {
-                // Convert date to D/M/YYYY format to match Airtable (no leading zeros)
+                // Convert to European format D/M/YYYY (no leading zeros)
                 const date = new Date(selectedEvent.date);
                 const day = date.getDate();
                 const month = date.getMonth() + 1;
                 const year = date.getFullYear();
-                const eventDateFormatted = `${day}/${month}/${year}`;
+                const europeanDate = `${day}/${month}/${year}`;
                 
-                console.log('Filtering for Event Date:', eventDateFormatted);
+                console.log('Event date from Airtable:', selectedEvent.date);
+                console.log('European format for filtering:', europeanDate);
+                
+                // Use DATESTR to compare dates properly in Airtable (same as dining registration app)
+                const formula = `DATESTR({Event Date}) = '${europeanDate}'`;
+                
+                console.log('Filter formula:', formula);
                 
                 // Fetch all diners for this event
-                const url = `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula={Event Date}='${eventDateFormatted}'`;
+                const url = `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.dinersTable}?filterByFormula=${encodeURIComponent(formula)}`;
                 console.log('Fetch URL:', url);
                 
                 const response = await fetch(url, {
