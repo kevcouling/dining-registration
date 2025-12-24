@@ -166,8 +166,8 @@
 
         .round-table {
             position: absolute;
-            width: 200px;
-            height: 200px;
+            width: 160px;
+            height: 160px;
             border-radius: 50%;
             background: #fff;
             border: 3px solid #1a4d7d;
@@ -207,10 +207,10 @@
             background: white;
             border: 2px solid #1a4d7d;
             border-radius: 6px;
-            padding: 8px;
-            font-size: 11px;
+            padding: 6px;
+            font-size: 10px;
             text-align: center;
-            min-width: 80px;
+            min-width: 70px;
             cursor: move;
             pointer-events: all;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
@@ -228,9 +228,38 @@
         }
 
         .diner-dietary {
-            font-size: 9px;
+            font-size: 8px;
             color: #666;
             line-height: 1.2;
+        }
+
+        .delete-table-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+            pointer-events: all;
+        }
+
+        .round-table:hover .delete-table-btn {
+            opacity: 1;
+        }
+
+        .delete-table-btn:hover {
+            background: #c82333;
         }
 
         .controls {
@@ -383,7 +412,7 @@
                         </div>
                         <div class="form-group">
                             <label for="dinersPerTable">Diners Per Table:</label>
-                            <input type="number" id="dinersPerTable" min="4" max="20" value="10" onchange="calculateMinimumTables()">
+                            <input type="number" id="dinersPerTable" min="4" max="20" value="8" onchange="calculateMinimumTables()">
                         </div>
                         <div class="form-group">
                             <label for="numberOfTables">Number of Tables:</label>
@@ -451,7 +480,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('========================================');
             console.log('TABLE PLANNING ADMIN');
-            console.log('Version: v1.7 - 2024-12-22 - IS_SAME Date Function');
+            console.log('Version: v2.0 - 2024-12-22 - UI Improvements');
             console.log('========================================');
             loadEvents();
         });
@@ -647,6 +676,27 @@
             renderTableLayout();
         }
 
+        function deleteTable(tableNumber) {
+            // Check if table is empty
+            const tableDiners = tableAllocations[tableNumber] || [];
+            if (tableDiners.length > 0) {
+                alert('Cannot delete a table with diners. Please move all diners first.');
+                return;
+            }
+            
+            // Delete position from saved positions
+            delete tablePositions[tableNumber];
+            
+            // Decrease total number of tables
+            const currentTables = parseInt(document.getElementById('numberOfTables').value);
+            if (currentTables > 1) {
+                document.getElementById('numberOfTables').value = currentTables - 1;
+            }
+            
+            // Re-render
+            renderTableLayout();
+        }
+
         function renderTableLayout() {
             const container = document.getElementById('tableLayoutArea');
             const numberOfTables = parseInt(document.getElementById('numberOfTables').value) || 1;
@@ -680,13 +730,26 @@
                 tableNumber.textContent = i;
                 table.appendChild(tableNumber);
                 
+                // Delete button (only show if table is empty)
+                const tableDiners = tableAllocations[i] || [];
+                if (tableDiners.length === 0) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-table-btn';
+                    deleteBtn.innerHTML = '🗑️';
+                    deleteBtn.title = 'Delete empty table';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteTable(i);
+                    };
+                    table.appendChild(deleteBtn);
+                }
+                
                 // Diners container
                 const dinersContainer = document.createElement('div');
                 dinersContainer.className = 'table-diners';
                 table.appendChild(dinersContainer);
                 
                 // Add diners to this table
-                const tableDiners = tableAllocations[i] || [];
                 tableDiners.forEach((diner, idx) => {
                     const dinerEl = createDinerElement(diner, idx, tableDiners.length);
                     dinersContainer.appendChild(dinerEl);
@@ -710,12 +773,12 @@
             
             // Position around the circle
             const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
-            const radius = 110;
+            const radius = 85; // Closer to table for smaller size
             const x = 50 + Math.cos(angle) * radius;
             const y = 50 + Math.sin(angle) * radius;
             
-            el.style.left = `calc(${x}% - 40px)`;
-            el.style.top = `calc(${y}% - 20px)`;
+            el.style.left = `calc(${x}% - 35px)`;
+            el.style.top = `calc(${y}% - 15px)`;
             
             const nameDiv = document.createElement('div');
             nameDiv.className = 'diner-name';
@@ -732,14 +795,56 @@
             // Drag events
             el.addEventListener('dragstart', (e) => {
                 draggedDiner = diner;
+                draggedElement = el;
                 e.dataTransfer.effectAllowed = 'move';
+                el.style.opacity = '0.5';
             });
             
             el.addEventListener('dragend', () => {
                 draggedDiner = null;
+                draggedElement = null;
+                el.style.opacity = '1';
+            });
+            
+            // Make diner positions drop zones for reordering
+            el.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (draggedDiner && draggedDiner.id !== diner.id) {
+                    el.style.background = '#e3f2fd';
+                }
+            });
+            
+            el.addEventListener('dragleave', () => {
+                el.style.background = 'white';
+            });
+            
+            el.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                el.style.background = 'white';
+                
+                if (draggedDiner && draggedDiner.id !== diner.id && draggedDiner.tableNumber === diner.tableNumber) {
+                    // Swap positions of the two diners
+                    swapDinerPositions(draggedDiner, diner);
+                }
             });
             
             return el;
+        }
+
+        function swapDinerPositions(diner1, diner2) {
+            const tableNum = diner1.tableNumber;
+            const tableDiners = tableAllocations[tableNum];
+            
+            const idx1 = tableDiners.findIndex(d => d.id === diner1.id);
+            const idx2 = tableDiners.findIndex(d => d.id === diner2.id);
+            
+            if (idx1 !== -1 && idx2 !== -1) {
+                // Swap in the array
+                [tableDiners[idx1], tableDiners[idx2]] = [tableDiners[idx2], tableDiners[idx1]];
+                renderTableLayout();
+            }
         }
 
         function makeTableDraggable(table) {
