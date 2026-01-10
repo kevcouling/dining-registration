@@ -211,9 +211,13 @@
             font-size: 10px;
             text-align: center;
             min-width: 70px;
-            cursor: move;
+            cursor: grab;
             pointer-events: all;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .diner-position:active {
+            cursor: grabbing;
         }
 
         .diner-position:hover {
@@ -260,6 +264,10 @@
 
         .delete-table-btn:hover {
             background: #c82333;
+        }
+
+        .print-title {
+            display: none;
         }
 
         .controls {
@@ -335,6 +343,71 @@
                 background: white;
                 color: #1a4d7d;
                 border-bottom: 2px solid #1a4d7d;
+                padding: 20px;
+            }
+            
+            .logo-placeholder {
+                display: none;
+            }
+            
+            h1 {
+                font-size: 18pt;
+                margin: 0;
+            }
+            
+            /* Print title styling */
+            .print-title {
+                font-size: 16pt;
+                font-weight: bold;
+                color: #1a4d7d;
+                margin-bottom: 15px;
+                text-align: center;
+            }
+            
+            /* Table plan specific print styles */
+            .table-layout-area {
+                background: white !important;
+                padding: 10mm !important;
+                min-height: auto !important;
+                position: relative !important;
+                page-break-after: avoid;
+            }
+            
+            .round-table {
+                page-break-inside: avoid;
+            }
+            
+            .diner-position {
+                font-size: 10pt !important;
+                font-family: Arial, sans-serif !important;
+                padding: 4px !important;
+                min-width: 60px !important;
+            }
+            
+            .diner-name {
+                font-size: 10pt !important;
+                font-weight: bold !important;
+            }
+            
+            .diner-dietary {
+                font-size: 8pt !important;
+            }
+            
+            /* Data table print styles */
+            table {
+                page-break-inside: auto;
+                font-size: 9pt;
+            }
+            
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            
+            th {
+                background: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
         }
 
@@ -480,7 +553,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('========================================');
             console.log('TABLE PLANNING ADMIN');
-            console.log('Version: v2.0 - 2024-12-22 - UI Improvements');
+            console.log('Version: v2.1 - 2024-12-22 - Print & Interaction Updates');
             console.log('========================================');
             loadEvents();
         });
@@ -852,7 +925,13 @@
             let startX, startY, initialX, initialY;
             
             table.addEventListener('mousedown', (e) => {
-                if (e.target.classList.contains('diner-position')) return;
+                // Don't allow dragging if clicking on diner, delete button, or table number
+                if (e.target.classList.contains('diner-position') || 
+                    e.target.closest('.diner-position') ||
+                    e.target.classList.contains('delete-table-btn') ||
+                    e.target.classList.contains('table-number')) {
+                    return;
+                }
                 
                 isDragging = true;
                 table.classList.add('dragging');
@@ -1042,7 +1121,26 @@
         }
 
         function printDataTable() {
-            // Hide everything except diners table
+            // Create print title
+            const eventDate = new Date(selectedEvent.date).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            const printTitle = document.createElement('div');
+            printTitle.className = 'print-title';
+            printTitle.textContent = `Hicks Beach - ${eventDate} Dining list`;
+            printTitle.style.display = 'none';
+            
+            const dinersSection = document.getElementById('dinersSection');
+            dinersSection.insertBefore(printTitle, dinersSection.firstChild);
+            
+            // Show title only for print
+            const originalDisplay = printTitle.style.display;
+            printTitle.style.display = 'block';
+            
+            // Hide everything except diners section
             const sections = document.querySelectorAll('.section');
             sections.forEach(s => {
                 if (s.id !== 'dinersSection') {
@@ -1050,13 +1148,38 @@
                 }
             });
             
+            // Hide section title
+            const sectionTitle = dinersSection.querySelector('.section-title');
+            const originalTitleDisplay = sectionTitle.style.display;
+            sectionTitle.style.display = 'none';
+            
             window.print();
             
             // Restore
             sections.forEach(s => s.style.display = '');
+            sectionTitle.style.display = originalTitleDisplay;
+            printTitle.remove();
         }
 
         function printVisualLayout() {
+            // Create print title
+            const eventDate = new Date(selectedEvent.date).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            const printTitle = document.createElement('div');
+            printTitle.className = 'print-title';
+            printTitle.textContent = `Hicks Beach - ${eventDate} Seating plan`;
+            printTitle.style.display = 'none';
+            
+            const layoutSection = document.getElementById('tableLayoutSection');
+            layoutSection.insertBefore(printTitle, layoutSection.firstChild);
+            
+            // Show title only for print
+            printTitle.style.display = 'block';
+            
             // Hide everything except table layout
             const sections = document.querySelectorAll('.section');
             sections.forEach(s => {
@@ -1065,10 +1188,17 @@
                 }
             });
             
+            // Hide section title
+            const sectionTitle = layoutSection.querySelector('.section-title');
+            const originalTitleDisplay = sectionTitle.style.display;
+            sectionTitle.style.display = 'none';
+            
             window.print();
             
             // Restore
             sections.forEach(s => s.style.display = '');
+            sectionTitle.style.display = originalTitleDisplay;
+            printTitle.remove();
         }
     </script>
 </body>
