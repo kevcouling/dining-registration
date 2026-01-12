@@ -329,6 +329,7 @@
             body {
                 background: white;
                 padding: 0;
+                margin: 0;
             }
 
             .no-print {
@@ -337,66 +338,71 @@
 
             .container {
                 box-shadow: none;
+                border-radius: 0;
             }
 
             .header {
-                background: white;
-                color: #1a4d7d;
-                border-bottom: 2px solid #1a4d7d;
-                padding: 20px;
+                display: none !important;
             }
             
-            .logo-placeholder {
-                display: none;
-            }
-            
-            h1 {
-                font-size: 18pt;
-                margin: 0;
+            .content {
+                padding: 5mm !important;
             }
             
             /* Print title styling */
             .print-title {
-                font-size: 16pt;
+                font-size: 14pt;
                 font-weight: bold;
                 color: #1a4d7d;
-                margin-bottom: 15px;
+                margin-bottom: 10mm;
                 text-align: center;
+                page-break-after: avoid;
             }
             
             /* Table plan specific print styles */
             .table-layout-area {
                 background: white !important;
-                padding: 10mm !important;
+                padding: 0 !important;
                 min-height: auto !important;
+                height: 250mm !important;
+                width: 190mm !important;
                 position: relative !important;
                 page-break-after: avoid;
+                margin: 0 auto;
             }
             
             .round-table {
                 page-break-inside: avoid;
+                transform: scale(1.2) !important;
             }
             
             .diner-position {
                 font-size: 10pt !important;
                 font-family: Arial, sans-serif !important;
-                padding: 4px !important;
-                min-width: 60px !important;
+                padding: 3px 4px !important;
+                min-width: 55px !important;
             }
             
             .diner-name {
                 font-size: 10pt !important;
                 font-weight: bold !important;
+                margin-bottom: 2px !important;
             }
             
             .diner-dietary {
                 font-size: 8pt !important;
+                line-height: 1.1 !important;
+            }
+            
+            .table-number {
+                font-size: 20px !important;
             }
             
             /* Data table print styles */
             table {
                 page-break-inside: auto;
-                font-size: 9pt;
+                font-size: 10pt;
+                margin-top: 5mm;
             }
             
             tr {
@@ -408,6 +414,17 @@
                 background: #f0f0f0 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                font-size: 11pt;
+                padding: 8px !important;
+            }
+            
+            td {
+                padding: 6px 8px !important;
+            }
+            
+            /* Hide specific columns when printing diners table */
+            .print-hide-column {
+                display: none !important;
             }
         }
 
@@ -514,6 +531,7 @@
                 <div class="controls no-print">
                     <button class="btn" onclick="printVisualLayout()">🖨️ Print Table Plan</button>
                     <button class="btn btn-secondary" onclick="resetTablePositions()">Reset Table Positions</button>
+                    <button class="btn" onclick="addTable()">➕ Add Table</button>
                 </div>
                 <div id="tableLayoutArea" class="table-layout-area"></div>
             </div>
@@ -553,7 +571,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('========================================');
             console.log('TABLE PLANNING ADMIN');
-            console.log('Version: v2.1 - 2024-12-22 - Print & Interaction Updates');
+            console.log('Version: v2.2 - 2024-12-22 - Print Fixes & Add Table');
             console.log('========================================');
             loadEvents();
         });
@@ -683,8 +701,8 @@
             let html = '<table id="dinersDataTable">';
             html += '<thead><tr>';
             html += '<th>Name</th>';
-            html += '<th>Rank</th>';
-            html += '<th>Diner Type</th>';
+            html += '<th class="print-hide-column">Rank</th>';
+            html += '<th class="print-hide-column">Diner Type</th>';
             html += '<th>Guest Of</th>';
             html += '<th>Dietary Requirements</th>';
             html += '<th>Special Requests</th>';
@@ -694,8 +712,8 @@
             diners.forEach((diner, index) => {
                 html += '<tr>';
                 html += `<td>${diner.name}</td>`;
-                html += `<td>${diner.rank}</td>`;
-                html += `<td>${diner.dinerType}</td>`;
+                html += `<td class="print-hide-column">${diner.rank}</td>`;
+                html += `<td class="print-hide-column">${diner.dinerType}</td>`;
                 html += `<td>${diner.guestOf}</td>`;
                 html += `<td>${diner.dietary}</td>`;
                 html += `<td>${diner.specialRequests}</td>`;
@@ -746,6 +764,24 @@
 
         function generateTables() {
             const numberOfTables = parseInt(document.getElementById('numberOfTables').value) || 1;
+            renderTableLayout();
+        }
+
+        function addTable() {
+            const currentTables = parseInt(document.getElementById('numberOfTables').value) || 1;
+            document.getElementById('numberOfTables').value = currentTables + 1;
+            
+            // Position new table to the right of existing tables
+            const newTableNum = currentTables + 1;
+            const cols = Math.ceil(Math.sqrt(currentTables));
+            const row = Math.floor(currentTables / cols);
+            const col = currentTables % cols;
+            
+            tablePositions[newTableNum] = {
+                x: 50 + (col * 250),
+                y: 50 + (row * 250)
+            };
+            
             renderTableLayout();
         }
 
