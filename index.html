@@ -592,7 +592,7 @@
 
         <div id="bookingClosedMessage" class="error-message" style="display: none;">
             <strong>Booking Closed</strong><br>
-            Booking for this event is now closed. If you need to discuss the event, please contact the Treasurer, Kev Couling at <a href="/cdn-cgi/l/email-protection#a4cdcac2cbe4cfc1d2cdcac7cbd1c8cdcac38ac7cb8ad1cf"><span class="__cf_email__" data-cfemail="3c55525a537c57594a55525f53495055525b125f53124957">[email&#160;protected]</span></a>
+            Booking for this event is now closed. If you need to discuss the event, please contact the Treasurer, Kev Couling at <a href="mailto:info@kevincouling.co.uk">info@kevincouling.co.uk</a>
         </div>
 
         <div id="bookingModeButtons" class="form-card" style="display: none; text-align: center;">
@@ -765,7 +765,7 @@
         </div>
     </div>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+    <script>
         // App Version
         const APP_VERSION = 'Phase 6 - v6.0 - Seasons Support';
         console.log('========================================');
@@ -784,7 +784,7 @@
 
         // State
         let currentEventData = null;
-        let currentSeasonData = null; // NEW: Store current season data
+        let currentSeasonData = null; // Season record for the active event's season
         let pendingDiner = null;
         let submittedDiners = [];
         let isLoading = false;
@@ -881,10 +881,7 @@
                 
                 if (activeEvent) {
                     currentEventData = activeEvent.fields;
-                    
-                    // Load the season data for this event
                     await loadCurrentSeason();
-                    
                     displayEventData(currentEventData);
                     console.log('✓ Active event loaded successfully:', currentEventData);
                 } else {
@@ -905,18 +902,20 @@
         async function loadCurrentSeason() {
             if (!currentEventData || !currentEventData['Event Date']) {
                 console.warn('Cannot load season - no event data');
+                currentSeasonData = null;
                 return;
             }
 
             try {
                 const eventDate = new Date(currentEventData['Event Date']);
-                const seasonYear = eventDate.getMonth() >= 9 ? eventDate.getFullYear() : eventDate.getFullYear() - 1; // Oct = month 9
-                const seasonText = `${seasonYear}-${seasonYear + 1}`;
-                
+                // Season runs Oct (month index 9) through Apr. Oct-Dec belongs to the season starting that year.
+                const seasonStartYear = eventDate.getMonth() >= 9 ? eventDate.getFullYear() : eventDate.getFullYear() - 1;
+                const seasonText = `${seasonStartYear}-${seasonStartYear + 1}`;
+
                 console.log('=== LOADING SEASON DATA ===');
                 console.log('Event date:', currentEventData['Event Date']);
                 console.log('Calculated season:', seasonText);
-                
+
                 const formula = encodeURIComponent(`{Season} = '${seasonText}'`);
                 const response = await fetch(
                     `https://api.airtable.com/v0/${AIRTABLE_CONFIG.baseId}/${AIRTABLE_CONFIG.seasonsTable}?filterByFormula=${formula}`,
@@ -928,27 +927,24 @@
                 );
 
                 if (!response.ok) {
-                    console.error('Failed to load season data');
+                    console.error('Failed to load season data, status:', response.status);
+                    currentSeasonData = null;
                     return;
                 }
 
                 const data = await response.json();
-                
+
                 if (data.records.length > 0) {
                     currentSeasonData = data.records[0].fields;
+                    currentSeasonData['_recordId'] = data.records[0].id;
                     console.log('✓ Season data loaded:', currentSeasonData);
                 } else {
-                    console.warn(`No season found for ${seasonText}`);
-                    // Create default season data
-                    currentSeasonData = {
-                        'Season': seasonText,
-                        'Total Master\'s Guests Allowed': 16,
-                        'Master\'s Guests Used': 0,
-                        'Master\'s Guests Remaining': 16
-                    };
+                    console.warn(`No season record found for ${seasonText}. Please create one in the Seasons table.`);
+                    currentSeasonData = null;
                 }
             } catch (error) {
                 console.error('Error loading season:', error);
+                currentSeasonData = null;
             }
         }
 
@@ -1028,13 +1024,13 @@
                 showMastersGuestAllowance();
             }
             
-            // Check Master's Guest limit
+            // Check Master's Guest limit (season-based)
             if (dinerType === 'Master\'s Guest') {
-                console.log('=== CHECKING MASTER\'S GUEST LIMIT ===');
+                console.log('=== CHECKING MASTER\'S GUEST LIMIT (SEASON) ===');
                 
                 if (!currentSeasonData) {
-                    console.warn('No season data available');
-                    alert('Unable to verify Master\'s Guest limit. Please try again.');
+                    console.warn('No season data available - cannot validate limit');
+                    alert('Unable to verify Master\'s Guest limit for this season. Please contact the Treasurer, Kev Couling, at info@kevincouling.co.uk.');
                     document.getElementById('dinerType').value = '';
                     return;
                 }
@@ -1042,8 +1038,8 @@
                 const remaining = currentSeasonData['Master\'s Guests Remaining'] || 0;
                 
                 console.log('Season:', currentSeasonData['Season']);
-                console.log('Season limit:', currentSeasonData['Total Master\'s Guests Allowed']);
-                console.log('Already used this season:', currentSeasonData['Master\'s Guests Used']);
+                console.log('Total allowed this season:', currentSeasonData['Total Master\'s Guests Allowed']);
+                console.log('Used this season:', currentSeasonData['Master\'s Guests Used']);
                 console.log('Remaining this season:', remaining);
                 
                 if (remaining <= 0) {
@@ -1585,6 +1581,10 @@
             const counter = document.getElementById('mastersGuestCounter');
             const counterText = document.getElementById('mastersGuestCounterText');
             
+            // Only show counter if there's a WM in the current booking OR Master's Guests exist in booking
+            const hasWMInBooking = submittedDiners.some(d => d.dinerType === 'Hicks Beach WM');
+            const mastersGuestsInSession = submittedDiners.filter(d => d.dinerType === 'Master\'s Guest').length;
+            
             if (!currentSeasonData) {
                 counter.style.display = 'none';
                 return;
@@ -1594,16 +1594,12 @@
             const used = currentSeasonData['Master\'s Guests Used'] || 0;
             const remaining = currentSeasonData['Master\'s Guests Remaining'] || 0;
             
-            // Only show counter if there's a WM in the current booking OR if Master's Guests exist in booking
-            const hasWMInBooking = submittedDiners.some(d => d.dinerType === 'Hicks Beach WM');
-            const mastersGuestsInSession = submittedDiners.filter(d => d.dinerType === 'Master\'s Guest').length;
-            
             // Only show if: season limit exists AND (WM in booking OR Master's Guests exist in booking)
             if (totalAllowed > 0 && (hasWMInBooking || mastersGuestsInSession > 0)) {
                 counter.style.display = 'block';
                 counterText.textContent = `Master's Guests this season: ${used} of ${totalAllowed} used (${remaining} remaining)`;
                 
-                if (remaining === 0) {
+                if (remaining <= 0) {
                     counter.style.borderColor = '#c41e3a';
                     counter.style.background = '#ffe6ea';
                 } else {
@@ -1752,7 +1748,7 @@
                 // Reload registered diners from Airtable
                 await loadRegisteredDiners();
                 
-                // Reload season data to get updated counts
+                // Reload season data to reflect the latest Master's Guest counts
                 await loadCurrentSeason();
                 
                 // Then update the display
@@ -1990,4 +1986,12 @@
         }
 
         function showSuccess(message) {
-            const container = document.g
+            const container = document.getElementById('errorContainer');
+            container.innerHTML = `<div class="success-message">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
